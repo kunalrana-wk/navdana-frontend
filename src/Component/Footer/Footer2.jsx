@@ -223,12 +223,12 @@ const Footer = () => {
                         <div className="footer-section flex-1 flex flex-col items-center sm:items-center lg:items-start mb-8 lg:mb-0 px-0 lg:px-8 w-full">
                             <h4 className="text-sm tracking-widest font-semibold mb-4 text-center lg:text-left">POLICIES</h4>
                             <ul className="space-y-2 text-sm text-center sm:text-left">
-                                <li><Link to="/return-exchange-request" className="animated-list-item block">Return/Exchange Request</Link></li>
+                                <li><Link to="/return-exchange-request" className="animated-list-item block">Refund Policy</Link></li>
                                 <li><Link to="/shiping-policy" className="animated-list-item block">Shipping Policy</Link></li>
                                 <li><Link to="/privacy-policy" className="animated-list-item block">Privacy Policy</Link></li>
                                 <li><Link to="/returns-exchanges" className="animated-list-item block">Return & Exchange Policy</Link></li>
                                 <li><Link to="/cancel-policy" className="animated-list-item block">Cancellation Policy</Link></li>
-                                <li><Link to="/refund-policy" className="animated-list-item block">Refund Policy</Link></li>
+                                {/* <li><Link to="/refund-policy" className="animated-list-item block">Refund Policy</Link></li> */}
                             </ul>
                         </div>
 
