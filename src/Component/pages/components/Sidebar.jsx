@@ -53,6 +53,11 @@ const menuItems = [
   label: "Coupons",
   icon: <span role="img" aria-label="Coupons">🎟</span>,
 },
+ {
+    to: "/dashboard/blog",
+    label: "Blog",
+    icon: <span role="img" aria-label="Blog">📝</span>,
+  },
 ];
 
 export default function Sidebar() {

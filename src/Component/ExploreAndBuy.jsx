@@ -8,7 +8,7 @@ const DEMO_ACCESS_TOKEN =
 
 export default function App() {
   return (
-    <div className="min-h-screen overflow-x-hidden bg-gray-50">
+    <div className="overflow-x-hidden">
 
       <InstagramReels userId={DEMO_USER_ID} accessToken={DEMO_ACCESS_TOKEN} />
     </div>

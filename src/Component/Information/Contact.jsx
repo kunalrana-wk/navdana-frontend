@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import axios from "axios";
 
 export default function Contact() {
   const [formData, setFormData] = useState({ name: "", email: "", message: "" });
@@ -15,10 +16,22 @@ export default function Contact() {
     setFormData((prevData) => ({ ...prevData, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setShowModal({ visible: true, message: "Your message has been sent successfully!" });
-    setFormData({ name: "", email: "", message: "" });
+
+    try {
+      const response = await axios.post("https://navdana.com/api/v1/contact", formData);
+
+      if (response.data.success) {
+        setShowModal({ visible: true, message: "✅ Your message has been sent successfully!" });
+        setFormData({ name: "", email: "", message: "" });
+      } else {
+        setShowModal({ visible: true, message: "❌ Failed to send message. Try again later." });
+      }
+    } catch (error) {
+      setShowModal({ visible: true, message: "⚠️ Something went wrong. Please try again." });
+    }
+
     setTimeout(() => {
       setShowModal({ visible: false, message: "" });
     }, 3000);
@@ -49,7 +62,7 @@ export default function Contact() {
     textArea.focus();
     textArea.select();
     try {
-      document.execCommand('copy');
+      document.execCommand("copy");
       setShowModal({ visible: true, message: `Copied "${text}" to clipboard!` });
       setTimeout(() => {
         setShowModal({ visible: false, message: "" });
@@ -78,7 +91,6 @@ export default function Contact() {
         We're here to help you!
       </h2>
       <div className="max-w-3xl mx-auto">
-        {/* Remove card format: no bg, no shadow, no rounded, no card padding */}
         <p className="text-center text-gray-700 mb-4">
           Have a question or need support? Fill out the form below and our team will get back to you within 24 hours.<br />
           Or email us at{" "}
@@ -101,7 +113,7 @@ export default function Contact() {
           </span>
         </p>
         <p className="text-center text-gray-600 mb-6">
-        B-108, Sector 6, Noida-201301
+          B-108, Sector 6, Noida-201301
         </p>
         <form onSubmit={handleSubmit} className="space-y-6 max-w-lg mx-auto">
           <div>
@@ -145,18 +157,23 @@ export default function Contact() {
           </button>
         </form>
       </div>
+
       {/* Decorative elements */}
       <div className="text-center mt-12">
         <div className="inline-block w-[60px] h-[2px] bg-gradient-to-r from-[#b48a78] to-[#8b5a3c] mx-2"></div>
         <span className="text-[#b48a78] text-2xl">✦</span>
         <div className="inline-block w-[60px] h-[2px] bg-gradient-to-r from-[#8b5a3c] to-[#b48a78] mx-2"></div>
       </div>
-      {/* Dynamic Modal for feedback */}
+
+      {/* Dynamic Modal */}
       {showModal.visible && (
         <div className="fixed bottom-4 right-4 z-50 transition-all duration-300 ease-out animate-fade-in-up">
           <div className="bg-[#b48a78] text-white text-sm px-6 py-3 rounded-lg shadow-xl flex items-center space-x-2">
             <span>{showModal.message}</span>
-            <button onClick={() => setShowModal({ visible: false, message: "" })} className="text-gray-200 hover:text-white">
+            <button
+              onClick={() => setShowModal({ visible: false, message: "" })}
+              className="text-gray-200 hover:text-white"
+            >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>

@@ -5,6 +5,7 @@ import SuitSet from "./SuitSet";
 import ExploreAndBuy from "./ExploreAndBuy";
 import Footer1 from "./Footer/Footer1";
 import About from "./Information/About";
+import BlogPage from "./Information/BlogPage";
 
 const Home = () => {
   return (
@@ -14,7 +15,7 @@ const Home = () => {
       <SuitSet />
       <ExploreAndBuy />
       <Footer1 />
-      <About />
+      <BlogPage />
     </div>
   );
 };
