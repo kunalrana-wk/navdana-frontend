@@ -49,7 +49,7 @@ import Users from "./Component/pages/dashboard/Users";
 import Orders from "./Component/pages/dashboard/Orders";
 import Coupons from "./Component/pages/dashboard/Coupans";
 import Blog from "./Component/pages/dashboard/Blog";
-
+import ContactDetails from "./Component/pages/dashboard/ContactDetails";
 
 // Order page
 import MyOrders from "./pages/MyOrders";
@@ -133,6 +133,10 @@ function App() {
               <Route 
                path="/dashboard/blog"
                element={<ProtectedRoute role="admin" element={<DashboardLayout><Blog /></DashboardLayout>} />}   
+              />
+              <Route 
+               path="/dashboard/contact-details"
+                element={<ProtectedRoute role="admin" element={<DashboardLayout><ContactDetails /></DashboardLayout>} />}
               />
               
 

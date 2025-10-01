@@ -7,12 +7,12 @@ import { MdOutlineClose } from "react-icons/md";
 
 // Dynamic menu items array
 const menuItems = [
-  {
-    to: "/dashboard/dashboard",
-    label: "Dashboard",
-    icon: <RxDashboard className="inline-block text-lg" />,
-    className: "flex items-center space-x-2",
-  },
+  // {
+  //   to: "/dashboard/dashboard",
+  //   label: "Dashboard",
+  //   icon: <RxDashboard className="inline-block text-lg" />,
+  //   className: "flex items-center space-x-2",
+  // },
   {
     to: "/dashboard/category",
     label: "Category",
@@ -38,16 +38,16 @@ const menuItems = [
     label: "Orders",
     icon: <span role="img" aria-label="Orders">📝</span>,
   },
-  {
-    to: "/dashboard/reports",
-    label: "Reports",
-    icon: <span role="img" aria-label="Reports">📊</span>,
-  },
-  {
-    to: "/dashboard/settings",
-    label: "Settings",
-    icon: <span role="img" aria-label="Settings">⚙</span>,
-  },
+  // {
+  //   to: "/dashboard/reports",
+  //   label: "Reports",
+  //   icon: <span role="img" aria-label="Reports">📊</span>,
+  // },
+  // {
+  //   to: "/dashboard/settings",
+  //   label: "Settings",
+  //   icon: <span role="img" aria-label="Settings">⚙</span>,
+  // },
   {
   to: "/dashboard/coupons",
   label: "Coupons",
@@ -58,6 +58,11 @@ const menuItems = [
     label: "Blog",
     icon: <span role="img" aria-label="Blog">📝</span>,
   },
+  {
+    to: "/dashboard/contact-details",
+    label: "Contact Details",
+    icon: <span role="img" aria-label="Contact Details">📞</span>,
+  }
 ];
 
 export default function Sidebar() {
