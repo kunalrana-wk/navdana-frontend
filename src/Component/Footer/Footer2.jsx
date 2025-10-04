@@ -29,7 +29,7 @@ const Footer = () => {
     useEffect(() => {
         const fetchCategories = async () => {
             try {
-                const res = await axios.get("https://navdana.com/api/v1/category");
+                const res = await axios.get("http://localhost:3000/api/v1/category");
                 if (Array.isArray(res.data.categories)) {
                     const activeCategories = res.data.categories.filter(
                         (cat) => cat.isActive && cat.name !== "All Products"
@@ -157,22 +157,29 @@ const Footer = () => {
                     {/* Responsive flex for sections with vertical divider */}
                     {/* MOBILE: 2 rows, 2 columns for CATEGORIES, INFORMATION, POLICIES, NEWSLETTER */}
                     <div className="footer-main-grid items-stretch justify-center">
-                        {/* Section 0: Logo (keep above grid on mobile, not in grid) */}
-                        <div className="flex flex-col items-left sm:items-start mb-8 lg:mb-0 lg:mr-10 col-span-2" style={{ gridColumn: "1 / span 2" }}>
-                            <div>
+                        
+                        {/* 🌟🌟🌟 START OF CORRECTION 🌟🌟🌟 */}
+                        {/* Section 0: Logo (Now centered on mobile) */}
+                        <div 
+                            className="flex flex-col items-center sm:items-start mb-8 lg:mb-0 lg:mr-10 col-span-2" 
+                            style={{ gridColumn: "1 / span 2" }}
+                        >
+                            <div className="text-center sm:text-left">
                                 <Link to="/" className="mb-4 no-underline">
                                     <img
                                         src="/logo.png"
                                         alt="Navdana Logo"
                                         width={35}
                                         height={35}
-                                        className="h-10 w-auto mb-3 logo-pulse"
+                                        // Added mx-auto to center image on mobile
+                                        className="h-10 w-auto mb-3 logo-pulse mx-auto sm:mx-0" 
                                         aria-label="Navdana Logo"
                                     />
                                 </Link>
-                                <span className="text-xs text-gray-500 mt-1 text-left sm:text-left">Ethnic Wear for Women</span>
+                                <span className="text-xs text-gray-500 mt-1 text-center sm:text-left">Ethnic Wear for Women</span>
                             </div>   
                         </div>
+                        {/* 🌟🌟🌟 END OF CORRECTION 🌟🌟🌟 */}
 
                         {/* Categories */}
                         <div className="footer-section flex-1">

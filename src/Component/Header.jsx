@@ -47,7 +47,7 @@ const Header = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await axios.get("https://navdana.com/api/v1/category");
+        const response = await axios.get("http://localhost:3000/api/v1/category");
         if (Array.isArray(response.data.categories)) {
           const activeCategories = response.data.categories.filter(
             (cat) => cat.isActive && cat.name !== "All Products"
@@ -101,7 +101,7 @@ const Header = () => {
     }
     try {
       setLoading(true);
-      await axios.post("https://navdana.com/api/v1/user/send-otp", { email });
+      await axios.post("http://localhost:3000/api/v1/user/send-otp", { email });
       setLoading(false);
       setShowEmailPopup(false);
       setShowOtpPopup(true);
@@ -119,7 +119,7 @@ const Header = () => {
     try {
       setLoading(true);
       const res = await axios.post(
-        "https://navdana.com/api/v1/user/verify",
+        "http://localhost:3000/api/v1/user/verify",
         { email, otp },
         {
           withCredentials: true,
@@ -156,7 +156,7 @@ const Header = () => {
       {/* Top promotional strip */}
       <div className="text-center bg-gray-950 text-white py-3 animate-fade-in">
         <p className="text-sm sm:text-base font-semibold tracking-wide animate-pulse">
-          ⚡ Coming Live on 20th September 2025 ⚡
+          ⚡ PAN India Delivery ⚡
         </p>
       </div>
 
