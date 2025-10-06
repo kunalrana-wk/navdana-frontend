@@ -55,6 +55,9 @@ import ContactDetails from "./Component/pages/dashboard/ContactDetails";
 import MyOrders from "./pages/MyOrders";
 
 
+// Search page
+import SearchPage from "./Component/pages/components/SearchPage";
+
 // 🔹 ProtectedRoute Component
 function ProtectedRoute({ element, role }) {
   const user = JSON.parse(localStorage.getItem("user"));
@@ -149,6 +152,9 @@ function App() {
 
               {/* Order Page  */}
               <Route path='/my-orders' element={<MyOrders />} />
+
+              {/* Search Paege  */}
+              <Route path='/search' element={<SearchPage />} />
 
             </Routes>
           </main>
