@@ -208,14 +208,20 @@ const Product = () => {
       // Ensure 'variant' is always an array and matches backend expectations
       dataToSend.append("variant", JSON.stringify(variantsWithColorName));
 
+      
       formData.images.forEach((img) => {
-        if (img.file) {
-          dataToSend.append("images", img.file); // new file
-          dataToSend.append("alts", img.alt || "");
-        } else if (img._id) {
-          dataToSend.append("existingImages", img._id); // only send if still present
+        if(img.file) {
+          dataToSend.append("images",img.file)
+          dataToSend.append("alts",img.alt || "")
+
+          if(img.public_id) {
+            dataToSend.append("replacePublicIds",img.public_id)
+          }
+        } else if(img.public_id) {
+          // existing image that the user didn't touch
+          dataToSend.append("existingImages",img.public_id)
         }
-      });
+      })
       
       
       
@@ -230,6 +236,12 @@ const Product = () => {
       };
 
       if (editingId) {
+
+        for (const pair of dataToSend.entries()) {
+  console.log(pair[0], pair[1]);
+}
+
+
         await axios.put(`${API_URL}/${editingId}`, dataToSend, config);
         setSuccessMsg("Product updated successfully!");
       } else {
@@ -239,6 +251,7 @@ const Product = () => {
       resetForm();
       fetchProducts();
     } catch (error) {
+      console.log(error)
       setFormError(
         error?.response?.data?.message ||
         error?.message ||
@@ -278,7 +291,7 @@ const Product = () => {
       name: product.name || "",
       description: product.description || "",
       images: product.images
-      ? product.images.map((img) => ({ file: null, url: img.url, alt: img.alt || "", _id: img._id }))
+      ? product.images.map((img) => ({ file: null, url: img.url, alt: img.alt || "",  public_id: img.public_id }))
       : [{ file: null, alt: "" }],
       category: product.category?._id || "",
       price: product.price || "",
