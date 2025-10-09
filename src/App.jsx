@@ -129,10 +129,10 @@ function App() {
                 path="/dashboard/orders"
                 element={<ProtectedRoute role="admin" element={<DashboardLayout><Orders /></DashboardLayout>} />}
               />
-              <Route 
+              {/* <Route 
                 path="/dashboard/coupons"
                 element={<ProtectedRoute role="admin" element={<DashboardLayout><Coupons /></DashboardLayout>} />}
-              />
+              /> */}
               <Route 
                path="/dashboard/blog"
                element={<ProtectedRoute role="admin" element={<DashboardLayout><Blog /></DashboardLayout>} />}   

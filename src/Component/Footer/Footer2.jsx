@@ -311,7 +311,7 @@ const Footer = () => {
                                     <Facebook className="h-6 w-6 text-[#1778F2] group-hover:text-[#1778F2]" />
                                 </Link>
                                 <Link
-                                    to="https://instagram.com/navdana"
+                                    to="https://instagram.com/navdanaa"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     aria-label="Instagram"
@@ -321,7 +321,7 @@ const Footer = () => {
                                     <FaSquareInstagram className="h-6 w-6 text-pink-500 group-hover:text-pink-500" />
                                 </Link>
                                 <Link
-                                    to="https://threads.net/navdana"
+                                    to="https://www.threads.com/@navdanaa"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     aria-label="Threads"
@@ -331,7 +331,7 @@ const Footer = () => {
                                     <BsFillThreadsFill className="h-6 w-6 text-black group-hover:text-black" />
                                 </Link>
                                 <Link
-                                    to="https://linkedin.com/navdana"
+                                    to="https://www.linkedin.com/in/navdana/"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     aria-label="LinkedIn"
@@ -348,7 +348,7 @@ const Footer = () => {
                                     </svg>
                                 </Link>
                                 <Link
-                                    to="https://www.youtube.com/navdana"
+                                    to="https://www.youtube.com/@navdana"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     aria-label="YouTube"
