@@ -28,7 +28,6 @@ export default function CollectionPage() {
         else if (Array.isArray(res.data.data)) productList = res.data.data;
         setProducts(productList);
 
-        // Try to get category name from the first product, fallback to id
         if (productList.length > 0) {
           setCategoryName(productList[0].category?.name || productList[0].category || id);
         } else {
@@ -69,9 +68,7 @@ export default function CollectionPage() {
 
         {/* Heading */}
         <h2 className="text-3xl font-medium text-center mb-13">
-          {categoryName
-            ? toAllCaps(categoryName.replace(/-/g, " "))
-            : "PRODUCTS"}
+          {categoryName ? toAllCaps(categoryName.replace(/-/g, " ")) : "PRODUCTS"}
         </h2>
 
         {/* Product Grid */}
@@ -79,7 +76,7 @@ export default function CollectionPage() {
           {products.map((product) => (
             <div key={product._id} className="group bg-white rounded-lg shadow hover:shadow-lg transition flex flex-col">
               
-              {/* Image Container → Entire image clickable */}
+              {/* Image Container */}
               <Link
                 to={`/product/${product._id}`} 
                 className="relative w-full aspect-[3/4] overflow-hidden rounded-lg block"
@@ -94,14 +91,9 @@ export default function CollectionPage() {
                   lazy="loading"
                 />
 
-                {/* Bottom Left: Price */}
-                <div className="absolute bottom-2 left-2 bg-red-600 text-white text-xs px-2 py-1 rounded font-semibold transition-opacity duration-300 group-hover:opacity-0">
-                  ₹{product.price}
-                </div>
-
                 {/* Bottom Right: Add to Bag */}
                 <div className="absolute bottom-2 right-2 bg-white text-gray-800 p-1 rounded-full shadow transition-opacity duration-300 group-hover:opacity-0">
-                  {/* You can add an icon here if needed */}
+                  {/* Optional icon */}
                 </div>
 
                 {/* Hover Quick View */}
@@ -110,13 +102,28 @@ export default function CollectionPage() {
                 </div>
               </Link>
 
-              {/* Description and Price */}
+              {/* Description, Price, and Sizes */}
               <div className="pt-2 px-2 pb-3 flex-1 flex flex-col justify-between">
                 <h3 className="text-sm font-medium text-gray-800 mb-1 truncate">
                   {toAllCaps(product.name)}
                 </h3>
-                <div className="text-sm font-semibold text-pink-600">
+
+                <div className="text-sm font-semibold text-pink-600 mb-2">
                   ₹{product.price}
+                </div>
+
+                {/* Sizes as red boxes under price */}
+                <div className="flex flex-wrap gap-2 mt-1">
+                  {product.variant
+                    .filter(v => v.stock > 0)
+                    .map((v, idx) => (
+                      <span
+                        key={idx}
+                        className="bg-red-600 text-white px-3 py-1 rounded font-semibold text-xs sm:text-sm"
+                      >
+                        {v.size}
+                      </span>
+                  ))}
                 </div>
               </div>
             </div>

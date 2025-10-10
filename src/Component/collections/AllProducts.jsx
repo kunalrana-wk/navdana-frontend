@@ -14,7 +14,7 @@ export default function AllProducts() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await fetch(" https://navdana.com/api/v1/product");
+        const res = await fetch("https://navdana.com/api/v1/product");
         const data = await res.json();
         if (data.success && Array.isArray(data.data)) {
           setProducts(data.data);
@@ -100,6 +100,18 @@ export default function AllProducts() {
                   ₹{product.price}
                 </div>
               </div>
+              <div className="flex flex-wrap gap-2 m-2">
+                  {product.variant
+                    .filter(v => v.stock > 0)
+                    .map((v, idx) => (
+                      <span
+                        key={idx}
+                        className="bg-red-600 text-white px-3 py-1 rounded font-semibold text-xs sm:text-sm"
+                      >
+                        {v.size}
+                      </span>
+                  ))}
+                </div>
             </div>
           ))}
         </div>
