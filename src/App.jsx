@@ -145,7 +145,7 @@ function App() {
 
               {/* Home */}
               <Route path="/" element={<Home />} />
-              <Route path="/blog-page" element={<BlogPage/>} />
+              {/* <Route path="/blog-page" element={<BlogPage/>} /> */}
 
               {/* Catch-all */}
               <Route path="*" element={<ComingSoon />} />

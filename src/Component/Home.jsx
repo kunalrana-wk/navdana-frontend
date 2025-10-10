@@ -15,7 +15,7 @@ const Home = () => {
       <SuitSet />
       <ExploreAndBuy />
       <Footer1 />
-      <BlogPage />
+      {/* <BlogPage /> */}
     </div>
   );
 };

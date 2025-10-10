@@ -10,7 +10,7 @@ export default function App() {
   return (
     <div className="overflow-x-hidden">
 
-      <InstagramReels userId={DEMO_USER_ID} accessToken={DEMO_ACCESS_TOKEN} />
+      {/* <InstagramReels userId={DEMO_USER_ID} accessToken={DEMO_ACCESS_TOKEN} /> */}
     </div>
   );
 }
