@@ -3,7 +3,7 @@ import { Truck, Headphones, ShieldCheck, Mail } from "lucide-react";
 
 export default function Footer1() {
   return (
-    <footer className="bg-[#2C4A52] text-gray-100 mt-4">
+    <footer className="bg-black text-gray-100 mt-4">
       <div className="max-w-8xl mx-auto px-4 py-4 sm:py-8">
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 sm:gap-8 text-center">
           <div className="flex flex-col items-center">
