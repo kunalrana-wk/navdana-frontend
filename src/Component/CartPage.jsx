@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useCart } from "../context/CartContext";
 import { Link } from "react-router-dom";
 import axios from "axios";
@@ -7,11 +7,7 @@ import {
   PlusCircle,
   MinusCircle,
   ShoppingCart,
-  CheckCircle,
   Truck,
-  MapPin,
-  CreditCard,
-  FileText,
   Loader2,
 } from "lucide-react";
 
@@ -29,29 +25,33 @@ export default function CartPage() {
   });
   const [loading, setLoading] = useState(false);
 
-  // --- User authentication states ---
+  // User auth states
   const [user, setUser] = useState(JSON.parse(localStorage.getItem("user")) || null);
   const [token, setToken] = useState(localStorage.getItem("token") || "");
 
+  // Checkout popups
   const [showNamePopup, setShowNamePopup] = useState(false);
   const [showEmailPopup, setShowEmailPopup] = useState(false);
   const [showOtpPopup, setShowOtpPopup] = useState(false);
-
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
+
+  // Coupon states
+  const [couponCode, setCouponCode] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [discountAmount, setDiscountAmount] = useState(0);
 
   const totalPrice = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   // --- Cart handlers ---
   const handleIncrement = (item) => {
-  if (item.quantity < (item.stock || 1)) {
-    // Correctly call addToCart to increase quantity by 1
-    addToCart(item, 1);
-  } else {
-    alert("No more stock available for this variant!");
-  }
-};
+    if (item.quantity < (item.stock || 1)) {
+      addToCart(item, 1);
+    } else {
+      alert("No more stock available for this variant!");
+    }
+  };
 
   const handleDecrement = (item) => {
     removeFromCart(item._id, item.size, item.color, item.sku);
@@ -65,7 +65,7 @@ export default function CartPage() {
     setShippingInfo({ ...shippingInfo, [e.target.name]: e.target.value });
   };
 
-  // --- Checkout flow (name/email/otp) ---
+  // --- Checkout flow ---
   const startCheckout = () => {
     if (!user) {
       setShowNamePopup(true);
@@ -84,11 +84,11 @@ export default function CartPage() {
   };
 
   const sendOtp = async () => {
+    if (!email.trim()) {
+      alert("Please enter your email");
+      return;
+    }
     try {
-      if (!email.trim()) {
-        alert("Please enter your email");
-        return;
-      }
       setLoading(true);
       await axios.post("https://navdana.com/api/v1/user/send-otp", { email });
       setLoading(false);
@@ -101,31 +101,23 @@ export default function CartPage() {
   };
 
   const verifyOtp = async () => {
+    if (!otp.trim()) {
+      alert("Please enter OTP");
+      return;
+    }
     try {
-      if (!otp.trim()) {
-        alert("Please enter OTP");
-        return;
-      }
       setLoading(true);
-
       const res = await axios.post(
         "https://navdana.com/api/v1/user/verify",
         { name, email, otp, token: token || null },
-        {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-          withCredentials: true,
-        }
+        { headers: token ? { Authorization: `Bearer ${token}` } : {} }
       );
-
       setLoading(false);
-
       const { user: loggedInUser, token: authToken } = res.data;
       setUser(loggedInUser);
       setToken(authToken);
-
       localStorage.setItem("user", JSON.stringify(loggedInUser));
       localStorage.setItem("token", authToken);
-
       setShowOtpPopup(false);
       setShowCheckout(true);
     } catch (err) {
@@ -134,7 +126,38 @@ export default function CartPage() {
     }
   };
 
-  // ---------- Checkout with Razorpay ----------
+  // --- Coupon apply handler ---
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) {
+      alert("Please enter a coupon code");
+      return;
+    }
+
+    console.log("UserId CoupanId and carttotal", user._id, couponCode, totalPrice);
+
+    try {
+      setLoading(true);
+      const res = await axios.post(
+        "https://navdana.com/api/v1/coupon/apply",
+        {
+          userId: user._id,
+          couponId: couponCode,
+          cartTotal: totalPrice,
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setLoading(false);
+      const { discount, finalAmount, message } = res.data;
+      setAppliedCoupon(couponCode);
+      setDiscountAmount(discount);
+      alert(`${message}: You saved ₹${discount}`);
+    } catch (err) {
+      setLoading(false);
+      alert(err.response?.data?.message || "Failed to apply coupon");
+    }
+  };
+
+  // --- Checkout with Razorpay ---
   const handleCheckout = async () => {
     const { fullName, address, city, postalCode, country } = shippingInfo;
     if (!fullName || !address || !city || !postalCode || !country) {
@@ -145,7 +168,6 @@ export default function CartPage() {
     try {
       setLoading(true);
 
-      // 1) Create order on backend (DB order + Razorpay order)
       const createOrderPayload = {
         items: cart.map((item) => ({
           product: item._id,
@@ -157,19 +179,15 @@ export default function CartPage() {
           sku: item.sku || "",
         })),
         shippingAddress: shippingInfo,
+        couponId: appliedCoupon || null,
       };
 
       const orderRes = await axios.post(
         "https://navdana.com/api/v1/order",
         createOrderPayload,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      console.log("Order Response is:", orderRes);
-
-      // Backend must return: { order, razorpayOrder, key }
       const { order, razorpayOrder, key } = orderRes.data;
 
       if (!razorpayOrder || !key) {
@@ -178,7 +196,7 @@ export default function CartPage() {
         return;
       }
 
-      // 2) Dynamically load Razorpay SDK (if not present)
+      // Load Razorpay SDK dynamically
       if (!window.Razorpay) {
         const script = document.createElement("script");
         script.src = "https://checkout.razorpay.com/v1/checkout.js";
@@ -190,45 +208,37 @@ export default function CartPage() {
         });
       }
 
-      // 3) Configure Razorpay checkout options
       const options = {
-        key, // public key returned by backend
+        key,
         amount: razorpayOrder.amount,
         currency: razorpayOrder.currency,
         name: "Navdana Store",
         description: `Order #${order._id}`,
         order_id: razorpayOrder.id,
         handler: async function (response) {
-          // This handler runs after successful payment in Razorpay popup
           try {
             setLoading(true);
-            // 4) Verify payment on backend
             const verifyRes = await axios.post(
               "https://navdana.com/api/v1/order/verify",
               {
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_order_id: response.razorpay_order_id,
                 razorpay_signature: response.razorpay_signature,
-                // optionally send DB order id so backend can also use it
                 orderId: order._id,
               },
               { headers: { Authorization: `Bearer ${token}` } }
             );
-
             setLoading(false);
-
-            if (verifyRes.data && verifyRes.data.success) {
+            if (verifyRes.data?.success) {
               alert("Payment Successful & Order Placed!");
               clearCart();
               setShowCheckout(false);
             } else {
-              console.error("Verify response:", verifyRes.data);
-              alert("Payment verification failed! If amount was charged, contact support.");
+              alert("Payment verification failed! Contact support.");
             }
           } catch (err) {
             setLoading(false);
-            console.error("Verify error:", err);
-            alert("Payment verification failed. Please try again or contact support.");
+            alert("Payment verification failed. Contact support.");
           }
         },
         prefill: {
@@ -236,33 +246,18 @@ export default function CartPage() {
           email: user?.email || "",
           contact: shippingInfo.phone || (user?.phone || ""),
         },
-        notes: {
-          orderId: order?._id || "", // optional
-        },
         theme: { color: "#000000" },
       };
 
-      // 4) Open Razorpay popup
       const rzp = new window.Razorpay(options);
-      rzp.on("payment.failed", function (resp) {
-        // optional: handle payment failure event
-        console.error("Razorpay payment failed:", resp);
+      rzp.on("payment.failed", (resp) => {
         alert("Payment failed. Please try again.");
       });
       rzp.open();
-
-      // keep loading false because popup is open
       setLoading(false);
     } catch (err) {
-      console.error("Create order / checkout error:", err);
       setLoading(false);
-
-      // give user a helpful error
-      if (err.response && err.response.data && err.response.data.message) {
-        alert("Checkout failed: " + err.response.data.message);
-      } else {
-        alert("Checkout failed, try again.");
-      }
+      alert(err.response?.data?.message || "Checkout failed, try again.");
     }
   };
 
@@ -287,58 +282,39 @@ export default function CartPage() {
   return (
     <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 bg-gray-50 min-h-screen">
       <h2 className="text-4xl sm:text-5xl font-extrabold text-center text-gray-900 mb-10 tracking-tight">
-        <span className="bg-gradient-to-r from-indigo-500 to-purple-500 bg-clip-text text-transparent">
-          Your Cart
-        </span>
+        Your Cart
       </h2>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Cart Items Section */}
+        {/* Cart Items */}
         <div className="lg:col-span-2 space-y-6">
           {cart.map((item, idx) => (
             <div
               key={`${item._id}-${item.size}-${item.color}-${item.sku}-${idx}`}
               className="flex flex-col sm:flex-row items-center p-6 bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300"
             >
-              <img
-                src={item.image}
-                alt={item.name}
-                className="w-28 h-28 sm:w-32 sm:h-32 object-cover rounded-lg border border-gray-200"
-              />
+              <img src={item.image} alt={item.name} className="w-28 h-28 sm:w-32 sm:h-32 object-cover rounded-lg border border-gray-200"/>
               <div className="flex-1 sm:ml-6 flex flex-col justify-center mt-4 sm:mt-0">
                 <div className="flex justify-between items-start w-full">
                   <div>
                     <h3 className="text-lg sm:text-xl font-semibold text-gray-900">{item.name}</h3>
                     <p className="text-gray-600 mt-1">₹{item.price.toFixed(2)}</p>
-                    <div className="text-sm text-gray-500 mt-2 space-y-1">
-                      {item.size && <p>Size: {item.size}</p>}
-                      {item.color && <p>Color: {item.color}</p>}
-                      {item.sku && <p>SKU: {item.sku}</p>}
-                    </div>
+                    {item.size && <p className="text-sm text-gray-500 mt-1">Size: {item.size}</p>}
+                    {item.color && <p className="text-sm text-gray-500">Color: {item.color}</p>}
+                    {item.sku && <p className="text-sm text-gray-500">SKU: {item.sku}</p>}
                   </div>
-                  <button
-                    onClick={() => handleRemove(item)}
-                    className="text-red-500 hover:text-red-700 transition-colors"
-                    aria-label="Remove item"
-                  >
+                  <button onClick={() => handleRemove(item)} className="text-red-500 hover:text-red-700">
                     <XCircle size={24} />
                   </button>
                 </div>
-
                 <div className="flex items-center gap-4 mt-4">
-                  <button
-                    onClick={() => handleDecrement(item)}
-                    className="p-1 text-gray-600 hover:text-gray-800 transition"
-                  >
+                  <button onClick={() => handleDecrement(item)} className="p-1 text-gray-600 hover:text-gray-800">
                     <MinusCircle size={24} />
                   </button>
                   <span className="px-3 py-1 border border-gray-300 rounded-md font-medium text-gray-800">
                     {item.quantity}
                   </span>
-                  <button
-                    onClick={() => handleIncrement(item)}
-                    className="p-1 text-gray-600 hover:text-gray-800 transition"
-                  >
+                  <button onClick={() => handleIncrement(item)} className="p-1 text-gray-600 hover:text-gray-800">
                     <PlusCircle size={24} />
                   </button>
                 </div>
@@ -350,31 +326,51 @@ export default function CartPage() {
           ))}
         </div>
 
-        {/* Order Summary Section */}
+        {/* Order Summary */}
         <div className="lg:col-span-1 p-6 bg-white rounded-xl shadow-lg border border-gray-200 h-fit sticky top-4">
           <h3 className="text-2xl font-bold text-gray-900 mb-6">Order Summary</h3>
           <div className="flex justify-between items-center mb-4 text-lg">
             <span className="text-gray-700">Subtotal ({cart.length} items):</span>
             <span className="font-semibold text-gray-900">₹{totalPrice.toFixed(2)}</span>
           </div>
+
+          {/* Coupon Input */}
+          <div className="mb-4 flex">
+            <input
+              type="text"
+              placeholder="Enter coupon code"
+              value={couponCode}
+              onChange={(e) => setCouponCode(e.target.value)}
+              className="border border-gray-300 px-3 py-2 rounded-l-lg w-2/3 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            />
+            <button
+              onClick={handleApplyCoupon}
+              className="px-4 py-2 bg-indigo-600 text-white rounded-r-lg hover:bg-indigo-700 transition-colors"
+              disabled={loading}
+            >
+              Apply
+            </button>
+          </div>
+          {appliedCoupon && (
+            <div className="mb-4 text-green-600 font-semibold">
+              Applied Coupon: {appliedCoupon} - Discount: ₹{discountAmount.toFixed(2)}
+            </div>
+          )}
+
           <div className="flex justify-between items-center mb-6 pb-6 border-b border-gray-200 text-lg">
             <span className="text-gray-700">Shipping:</span>
             <span className="font-semibold text-gray-900">FREE</span>
           </div>
           <div className="flex justify-between items-center text-2xl font-bold mb-6">
             <span className="text-gray-900">Total:</span>
-            <span className="text-indigo-600">₹{totalPrice.toFixed(2)}</span>
+            <span className="text-indigo-600">₹{(totalPrice - discountAmount).toFixed(2)}</span>
           </div>
           <button
             onClick={startCheckout}
             className="w-full px-8 py-4 bg-indigo-600 text-white font-semibold text-lg rounded-lg shadow-md hover:bg-indigo-700 transition-colors disabled:bg-gray-400"
             disabled={loading}
           >
-            {loading ? (
-              <Loader2 className="animate-spin h-6 w-6 mx-auto" />
-            ) : (
-              "Proceed to Checkout"
-            )}
+            {loading ? <Loader2 className="animate-spin h-6 w-6 mx-auto" /> : "Proceed to Checkout"}
           </button>
         </div>
       </div>
@@ -553,7 +549,7 @@ export default function CartPage() {
                   {loading ? (
                     <Loader2 className="animate-spin h-5 w-5 mx-auto" />
                   ) : (
-                    `Pay ₹${totalPrice.toFixed(2)}`
+                    `Pay`
                   )}
                 </button>
               </div>
