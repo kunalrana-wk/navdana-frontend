@@ -128,15 +128,24 @@ export default function CartPage() {
 
   // --- Coupon apply handler ---
   const handleApplyCoupon = async () => {
+
+     if (!user || !token) {
+      alert("Please login first to apply a coupon.");
+      // Optional: Start the login flow immediately
+      // setShowNamePopup(true); 
+      return;
+    }
+
     if (!couponCode.trim()) {
       alert("Please enter a coupon code");
       return;
     }
 
-    console.log("UserId CoupanId and carttotal", user._id, couponCode, totalPrice);
+    console.log("UserId CoupanId and carttotal", user, couponCode, totalPrice);
 
     try {
       setLoading(true);
+      console.log(user._id,couponCode,totalPrice)
       const res = await axios.post(
         "https://navdana.com/api/v1/coupon/apply",
         {
@@ -153,6 +162,7 @@ export default function CartPage() {
       alert(`${message}: You saved ₹${discount}`);
     } catch (err) {
       setLoading(false);
+      console.log("Error in Coupon apply",err)
       alert(err.response?.data?.message || "Failed to apply coupon");
     }
   };
@@ -178,6 +188,7 @@ export default function CartPage() {
           color: item.color || "",
           sku: item.sku || "",
         })),
+        totalPrice,
         shippingAddress: shippingInfo,
         couponId: appliedCoupon || null,
       };
@@ -257,6 +268,7 @@ export default function CartPage() {
       setLoading(false);
     } catch (err) {
       setLoading(false);
+      console.log("Error while creating order:",err);
       alert(err.response?.data?.message || "Checkout failed, try again.");
     }
   };
@@ -298,7 +310,7 @@ export default function CartPage() {
                 <div className="flex justify-between items-start w-full">
                   <div>
                     <h3 className="text-lg sm:text-xl font-semibold text-gray-900">{item.name}</h3>
-                    <p className="text-gray-600 mt-1">₹{item.price.toFixed(2)}</p>
+                    <p className="text-gray-600 mt-1">₹{item?.price?.toFixed(2)}</p>
                     {item.size && <p className="text-sm text-gray-500 mt-1">Size: {item.size}</p>}
                     {item.color && <p className="text-sm text-gray-500">Color: {item.color}</p>}
                     {item.sku && <p className="text-sm text-gray-500">SKU: {item.sku}</p>}
@@ -353,7 +365,7 @@ export default function CartPage() {
           </div>
           {appliedCoupon && (
             <div className="mb-4 text-green-600 font-semibold">
-              Applied Coupon: {appliedCoupon} - Discount: ₹{discountAmount.toFixed(2)}
+              Applied Coupon: {appliedCoupon} - Discount: ₹{discountAmount?.toFixed(2)}
             </div>
           )}
 

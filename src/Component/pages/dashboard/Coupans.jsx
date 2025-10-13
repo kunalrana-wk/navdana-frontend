@@ -31,7 +31,7 @@ export default function Coupons() {
 
   const fetchCoupons = async () => {
     try {
-      const res = await axios.get("https://navdana.com/api/v1/coupan", config);
+      const res = await axios.get("https://navdana.com/api/v1/coupon", config);
       setCoupons(res.data.data || []);
     } catch (err) {
       console.error("Error fetching coupons", err);
@@ -54,7 +54,7 @@ export default function Coupons() {
 
     try {
       const res = await axios.post(
-        "https://navdana.com/api/v1/coupan",
+        "https://navdana.com/api/v1/coupon",
         formData,
         config
       );

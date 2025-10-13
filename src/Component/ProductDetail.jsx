@@ -14,6 +14,15 @@ const ColorNameConverter = (hex) => {
   }
 };
 
+// Utility function to calculate discount
+const calculateDiscount = (price, strikePrice) => {
+  if (price && strikePrice && price < strikePrice) {
+    const discount = Math.round(((strikePrice - price) / strikePrice) * 100);
+    return discount;
+  }
+  return null;
+};
+
 // Helper to detect mobile device (viewport width)
 function useIsMobile(breakpoint = 640) {
   const [isMobile, setIsMobile] = useState(
@@ -71,6 +80,9 @@ export default function ProductDetails() {
   }, [id]);
 
   if (!product) return <p className="p-6">Loading...</p>;
+
+  // Calculate discount only after product data is available
+  const discountPercentage = calculateDiscount(product.price, product.strikePrice);
 
   const sizes = [...new Set(product.variant?.map((v) => v.size))];
   const colors = [...new Set(product.variant?.map((v) => v.color))];
@@ -195,7 +207,7 @@ export default function ProductDetails() {
 
   return (
     <div className="p-4 sm:p-6 md:p-8 max-w-full md:max-w-6xl mx-auto bg-white rounded-xl">
-      {/* Zoom Modal for showpage */}
+      {/* Zoom Modal for showpage (REMAINS UNCHANGED) */}
       {showZoomModal && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
@@ -214,8 +226,6 @@ export default function ProductDetails() {
               ×
             </button>
             <div className="flex items-center justify-center w-full h-full relative">
-              {/* Desktop/Tablet: arrows on left/right, Mobile: arrows at bottom */}
-              {/* For mobile, hide these arrows, show at bottom instead */}
               <button
                 className="hidden sm:block absolute left-2 top-1/2 -translate-y-1/2 hover:bg-white text-2xl rounded-full p-2"
                 onClick={handleZoomModalPrev}
@@ -252,7 +262,6 @@ export default function ProductDetails() {
               >
                 <MdArrowBackIos style={{ transform: "scaleX(-1)" }} />
               </button>
-              {/* Mobile slide arrows and dot at center */}
               {isMobile && (
                 <div className="sm:hidden absolute bottom-4 left-0 right-0 flex flex-col items-center z-20">
                   <div className="flex justify-center items-center gap-4">
@@ -264,7 +273,6 @@ export default function ProductDetails() {
                     >
                       <MdArrowBackIos />
                     </button>
-                    {/* Dots in between arrows */}
                     <div className="flex justify-center items-center gap-2">
                       {displayImages.map((img, idx) => (
                         <span
@@ -312,7 +320,7 @@ export default function ProductDetails() {
       )}
 
       <div className="flex flex-col md:grid md:grid-cols-2 gap-6 md:gap-5">
-        {/* Images */}
+        {/* Images (REMAINS UNCHANGED) */}
         <div className="flex flex-col sm:flex-row gap-4 md:gap-6">
           {/* Mobile Slider */}
           <div className="block sm:hidden w-full relative">
@@ -391,7 +399,29 @@ export default function ProductDetails() {
         {/* Product Info */}
         <div className="flex flex-col gap-4 sm:gap-6 mt-4 md:mt-0">
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-medium text-gray-900">{product.name}</h1>
-          <p className="text-xl sm:text-2xl font-semibold text-gray-700">₹{product.price}</p>
+          
+          {/* START: Price, Strike Price, and Discount */}
+          <div className="flex items-center gap-3">
+            {/* Current Price */}
+            <p className="text-xl sm:text-2xl font-semibold text-gray-900">
+              ₹{product.price}
+            </p>
+
+            {/* Strike Price (Original Price) */}
+            {product.strikePrice && product.price < product.strikePrice && (
+              <span className="text-lg text-gray-400 line-through">
+                ₹{product.strikePrice}
+              </span>
+            )}
+
+            {/* Discount Percentage Badge */}
+            {discountPercentage !== null && (
+              <span className="text-base font-bold text-green-600 bg-green-100 px-3 py-1 rounded-full">
+                {discountPercentage}% OFF
+              </span>
+            )}
+          </div>
+          {/* END: Price, Strike Price, and Discount */}
 
           {/* Description */}
           {descriptionPoints?.length > 0 && (
@@ -428,7 +458,7 @@ export default function ProductDetails() {
             </div>
           )}
 
-          {/* Sizes */}
+          {/* Sizes (REMAINS UNCHANGED) */}
           {sizes.length > 0 && (
             <div className="flex flex-col gap-2">
               <div className="flex items-center justify-between gap-2">
@@ -459,7 +489,7 @@ export default function ProductDetails() {
             </div>
           )}
 
-          {/* Size Chart Modal */}
+          {/* Size Chart Modal (REMAINS UNCHANGED) */}
           {showSizeChart && product.images && product.images[4] && (
             <div
               className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
@@ -487,7 +517,7 @@ export default function ProductDetails() {
             </div>
           )}
 
-          {/* Quantity counter */}
+          {/* Quantity counter (REMAINS UNCHANGED) */}
           <div className="flex items-center gap-4 mt-4">
             <button
               className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 font-bold"
@@ -504,7 +534,7 @@ export default function ProductDetails() {
             </button>
           </div>
 
-          {/* Add to cart */}
+          {/* Add to cart (REMAINS UNCHANGED) */}
           <button
             onClick={handleAddToCart}
             className="bg-black text-white px-6 py-3 rounded-lg text-lg font-semibold shadow-md hover:bg-gray-800 mt-4"

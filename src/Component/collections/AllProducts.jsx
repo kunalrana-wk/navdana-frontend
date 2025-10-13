@@ -30,6 +30,15 @@ export default function AllProducts() {
     fetchProducts();
   }, []);
 
+  // Utility function to calculate discount
+  const calculateDiscount = (price, strikePrice) => {
+    if (price && strikePrice && price < strikePrice) {
+      const discount = Math.round(((strikePrice - price) / strikePrice) * 100);
+      return discount;
+    }
+    return null;
+  };
+
   // Pagination logic
   const indexOfLastProduct = currentPage * productsPerPage;
   const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
@@ -59,48 +68,72 @@ export default function AllProducts() {
 
         {/* Product Grid */}
         <div className="max-w-8xl mx-auto grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {currentProducts.map((product) => (
-            <div key={product._id} className="group bg-white rounded-lg shadow hover:shadow-lg transition flex flex-col">
-              <Link
-                to={`/product/${product._id}`}
-                className="relative w-full aspect-[3/4] overflow-hidden rounded-lg block"
+          {currentProducts.map((product) => {
+            const discountPercentage = calculateDiscount(product.price, product.strikePrice);
+
+            return (
+              <div
+                key={product._id}
+                className="group bg-white rounded-lg shadow hover:shadow-lg transition flex flex-col"
               >
-                <LazyLoadImage
-                  src={product.images?.[0]?.url}
-                  alt={product.images?.[0]?.alt || product.name}
-                  effect="blur"
-                  width="100%"
-                  height="auto"
-                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                  lazy="loading"
-                />
+                <Link
+                  to={`/product/${product._id}`}
+                  className="relative w-full aspect-[3/4] overflow-hidden rounded-lg block"
+                >
+                  <LazyLoadImage
+                    src={product.images?.[0]?.url}
+                    alt={product.images?.[0]?.alt || product.name}
+                    effect="blur"
+                    width="100%"
+                    height="auto"
+                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    lazy="loading"
+                  />
 
-                {/* Bottom Left: Price */}
-                <div className="absolute bottom-2 left-2 bg-red-600 text-white text-xs px-2 py-1 rounded font-semibold transition-opacity duration-300 group-hover:opacity-0">
-                  ₹{product.price}
+                  {/* Top Right: Discount Percentage */}
+                  {discountPercentage !== null && (
+                    <div className="absolute top-2 right-2 bg-red-600 text-white text-xs px-2 py-1 rounded font-bold">
+                      {discountPercentage}% OFF
+                    </div>
+                  )}
+
+                  {/* Bottom Left: Price (Hidden on hover) */}
+                  <div className="absolute bottom-2 left-2 bg-red-600 text-white text-xs px-2 py-1 rounded font-semibold transition-opacity duration-300 group-hover:opacity-0">
+                    ₹{product.price}
+                  </div>
+
+                  {/* Bottom Right: Add to Bag (Hidden on hover) */}
+                  <div className="absolute bottom-2 right-2 bg-white text-gray-800 p-1 rounded-full shadow transition-opacity duration-300 group-hover:opacity-0">
+                    {/* You can add an icon here if needed */}
+                  </div>
+
+                  {/* Hover Quick View */}
+                  <div className="absolute bottom-2 left-2 right-2 bg-[#2C4A52] text-white text-center py-3 opacity-0 group-hover:opacity-100 transition rounded-[8px]">
+                    Quick view
+                  </div>
+                </Link>
+
+                {/* Description and Price */}
+                <div className="pt-2 px-2 pb-3 flex-1 flex flex-col justify-between">
+                  <h3 className="text-sm font-medium text-gray-800 mb-1 truncate">
+                    {product.name}
+                  </h3>
+                  <div className="flex items-center space-x-2">
+                    {/* Discounted Price (Main Price) */}
+                    <div className="text-sm font-semibold text-pink-600">
+                      ₹{product.price}
+                    </div>
+                    {/* Strikethrough Price (Original Price) */}
+                    {product.strikePrice && product.price < product.strikePrice && (
+                      <div className="text-xs text-gray-400 line-through">
+                        ₹{product.strikePrice}
+                      </div>
+                    )}
+                  </div>
                 </div>
 
-                {/* Bottom Right: Add to Bag */}
-                <div className="absolute bottom-2 right-2 bg-white text-gray-800 p-1 rounded-full shadow transition-opacity duration-300 group-hover:opacity-0">
-                  {/* You can add an icon here if needed */}
-                </div>
-
-                {/* Hover Quick View */}
-                <div className="absolute bottom-2 left-2 right-2 bg-[#2C4A52] text-white text-center py-3 opacity-0 group-hover:opacity-100 transition rounded-[8px]">
-                  Quick view
-                </div>
-              </Link>
-
-              {/* Description and Price */}
-              <div className="pt-2 px-2 pb-3 flex-1 flex flex-col justify-between">
-                <h3 className="text-sm font-medium text-gray-800 mb-1 truncate">
-                  {product.name}
-                </h3>
-                <div className="text-sm font-semibold text-pink-600">
-                  ₹{product.price}
-                </div>
-              </div>
-              <div className="flex flex-wrap gap-2 m-2">
+                {/* Product Variants (Sizes) */}
+                <div className="flex flex-wrap gap-2 m-2">
                   {product.variant
                     .filter(v => v.stock > 0)
                     .map((v, idx) => (
@@ -110,10 +143,11 @@ export default function AllProducts() {
                       >
                         {v.size}
                       </span>
-                  ))}
+                    ))}
                 </div>
-            </div>
-          ))}
+              </div>
+            );
+          })}
         </div>
 
         {/* Pagination Controls */}

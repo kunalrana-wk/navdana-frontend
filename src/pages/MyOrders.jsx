@@ -11,8 +11,6 @@ import {
   CheckCircle,
   XCircle,
   Clock,
-  CircleDollarSign,
-  Truck,
   FileText,
 } from "lucide-react";
 
@@ -37,9 +35,17 @@ const MyOrders = () => {
           headers: { Authorization: `Bearer ${token}` },
           withCredentials: true,
         });
-        // Assuming the API returns a `prices` object with subtotal, shipping, tax, and total.
-        // If not, you may need to calculate it here.
-        setOrders(res.data.orders || []);
+
+        console.log("All Orders:", res?.data?.orders);
+
+        // ✅ Filter only paid orders
+        const paidOrders = (res.data.orders || []).filter(
+          (order) =>
+            order?.isPaid === true ||
+            order?.paymentInfo?.status?.toLowerCase() === "paid"
+        );
+
+        setOrders(paidOrders);
       } catch (err) {
         console.error("Failed to fetch orders:", err);
       } finally {
@@ -62,7 +68,7 @@ const MyOrders = () => {
       <div className="max-w-6xl mx-auto">
         <h1 className="text-4xl sm:text-5xl font-extrabold mb-10 text-center tracking-tight text-gray-900">
           <span className="bg-gradient-to-r from-indigo-500 to-purple-500 bg-clip-text text-transparent">
-            My Orders
+            My Paid Orders
           </span>
         </h1>
 
@@ -70,9 +76,11 @@ const MyOrders = () => {
           <div className="flex flex-col items-center justify-center h-64">
             <Package className="w-16 h-16 text-gray-400 mb-4" />
             <p className="text-gray-600 text-lg font-medium">
-              You haven’t placed any orders yet.
+              You have no paid orders yet.
             </p>
-            <p className="text-sm text-gray-400 mt-2">Start shopping to see your orders here!</p>
+            <p className="text-sm text-gray-400 mt-2">
+              Complete payment to view your orders here.
+            </p>
           </div>
         ) : (
           <div className="space-y-6">
@@ -108,7 +116,7 @@ const MyOrders = () => {
 
                     <div className="mt-4 md:mt-0 flex items-center gap-4">
                       <span
-                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium ${statusStyles[order.status]}`}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium ${statusStyles[order?.status]}`}
                       >
                         {order.status === "completed" && <CheckCircle className="w-4 h-4" />}
                         {order.status === "processing" && <Clock className="w-4 h-4" />}
@@ -130,7 +138,6 @@ const MyOrders = () => {
                   {/* Collapsible Details */}
                   {isExpanded && (
                     <div className="px-6 py-5 space-y-6 animate-slideIn">
-                      {/* Grid Sections */}
                       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 text-sm">
                         {/* Shipping */}
                         <div className="p-5 rounded-lg bg-gray-50/70 border border-gray-200">
@@ -165,12 +172,8 @@ const MyOrders = () => {
                             </p>
                             <p>
                               <span className="font-medium">Status:</span>{" "}
-                              <span
-                                className={`font-semibold ${
-                                  order.isPaid ? "text-green-600" : "text-red-600"
-                                }`}
-                              >
-                                {order.isPaid ? "Paid" : "Not Paid"}
+                              <span className="font-semibold text-green-600">
+                                Paid
                               </span>
                             </p>
                             <div className="pt-2 mt-2 border-t border-gray-200">
@@ -180,7 +183,7 @@ const MyOrders = () => {
                             </div>
                           </div>
                         </div>
-                        
+
                         {/* Price Breakdown */}
                         <div className="p-5 rounded-lg bg-gray-50/70 border border-gray-200">
                           <h3 className="font-semibold flex items-center gap-2 mb-3 text-gray-800">
@@ -199,6 +202,13 @@ const MyOrders = () => {
                               <span>Tax:</span>
                               <span>₹{order.prices?.taxPrice || "0.00"}</span>
                             </div>
+                            {/* ✅ Added Discount */}
+                            {order.prices?.discountPrice > 0 && (
+                              <div className="flex justify-between text-green-600">
+                                <span>Discount:</span>
+                                <span>- ₹{order.prices.discountPrice}</span>
+                              </div>
+                            )}
                             <div className="flex justify-between font-bold pt-2 mt-2 border-t border-gray-200 text-gray-800">
                               <span>Order Total:</span>
                               <span>₹{order.prices?.totalPrice || "0.00"}</span>
@@ -220,7 +230,6 @@ const MyOrders = () => {
                             >
                               <div className="flex items-center space-x-4">
                                 <div className="flex-shrink-0 w-16 h-16 rounded-lg bg-gray-100 flex items-center justify-center">
-                                  {/* Replace with actual product image if available */}
                                   <Package className="w-8 h-8 text-gray-400" />
                                 </div>
                                 <div>

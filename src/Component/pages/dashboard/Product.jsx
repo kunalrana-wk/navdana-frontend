@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import namer from "color-namer";
 
@@ -25,7 +25,7 @@ const defaultVariantRow = () => ({
 });
 
 const Product = () => {
-  console.log("Product Route Hit")
+  console.log("Product Route Hit");
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [formData, setFormData] = useState({
@@ -34,6 +34,10 @@ const Product = () => {
     images: [{ file: null, alt: "" }],
     category: "",
     price: "",
+    // --- UPDATED FIELDS START ---
+    strikePrice: "", // New field
+    percentageDiscount: "", // New field
+    // --- UPDATED FIELDS END ---
     variants: [defaultVariantRow()],
     isActive: true,
   });
@@ -60,7 +64,7 @@ const Product = () => {
     setLoading(true);
     try {
       const res = await axios.get(API_URL);
-      console.log("Logs in the Product Section",res.data.data)
+      console.log("Logs in the Product Section", res.data.data);
       // Fix: Ensure each product.variant is always an array
       const prods = (res.data?.data || []).map((prod) => ({
         ...prod,
@@ -93,9 +97,14 @@ const Product = () => {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
+    // Handle number inputs (price, strikePrice, percentageDiscount)
+    const processedValue = (name === 'price' || name === 'strikePrice' || name === 'percentageDiscount') 
+      ? (value === "" ? "" : Number(value)) 
+      : (type === "checkbox" ? checked : value);
+
     setFormData({
       ...formData,
-      [name]: type === "checkbox" ? checked : value,
+      [name]: processedValue,
     });
   };
 
@@ -115,7 +124,10 @@ const Product = () => {
   };
 
   const addVariantRow = () => {
-    setFormData({ ...formData, variants: [...formData.variants, defaultVariantRow()] });
+    setFormData({
+      ...formData,
+      variants: [...formData.variants, defaultVariantRow()],
+    });
   };
 
   const removeVariantRow = (idx) => {
@@ -137,7 +149,10 @@ const Product = () => {
   };
 
   const addImageField = () => {
-    setFormData({ ...formData, images: [...formData.images, { file: null, alt: "" }] });
+    setFormData({
+      ...formData,
+      images: [...formData.images, { file: null, alt: "" }],
+    });
   };
 
   const removeImageField = (index) => {
@@ -153,6 +168,10 @@ const Product = () => {
       images: [{ file: null, alt: "" }],
       category: "",
       price: "",
+      // --- UPDATED FIELDS START ---
+      strikePrice: "",
+      percentageDiscount: "",
+      // --- UPDATED FIELDS END ---
       variants: [defaultVariantRow()],
       isActive: true,
     });
@@ -166,17 +185,34 @@ const Product = () => {
     if (!formData.name.trim()) return "Product name is required";
     if (!formData.description.trim()) return "Description is required";
     if (!formData.category) return "Category is required";
-    if (!formData.price || isNaN(formData.price)) return "Valid price is required";
+    if (!formData.price || isNaN(formData.price))
+      return "Valid price is required";
+    
+    // --- UPDATED VALIDATION START ---
+    if (formData.strikePrice !== "" && isNaN(formData.strikePrice))
+      return "Valid strike price is required if entered";
+    if (formData.percentageDiscount !== "" && (isNaN(formData.percentageDiscount) || formData.percentageDiscount < 0 || formData.percentageDiscount > 100))
+        return "Valid percentage discount (0-100) is required if entered";
+    
+    if (formData.strikePrice !== "" && formData.price >= formData.strikePrice)
+        return "Price must be less than the strike price (original price) for a discount.";
+    // --- UPDATED VALIDATION END ---
+
     if (!formData.variants.length) return "At least one variant is required";
     for (let i = 0; i < formData.variants.length; i++) {
       const v = formData.variants[i];
-      if (!v.colorName.trim()) return `Color name is required for variant ${i + 1}`;
+      if (!v.colorName.trim())
+        return `Color name is required for variant ${i + 1}`;
       if (!v.color) return `Color is required for variant ${i + 1}`;
       if (!v.sku.trim()) return `SKU is required for variant ${i + 1}`;
-      if (!v.stock || isNaN(v.stock)) return `Valid stock is required for variant ${i + 1}`;
+      if (!v.stock || isNaN(v.stock))
+        return `Valid stock is required for variant ${i + 1}`;
       if (!v.size.trim()) return `Size is required for variant ${i + 1}`;
     }
-    if (!editingId && (!formData.images.length || !formData.images.some(img => img.file))) {
+    if (
+      !editingId &&
+      (!formData.images.length || !formData.images.some((img) => img.file))
+    ) {
       return "At least one product image is required";
     }
     return "";
@@ -196,7 +232,10 @@ const Product = () => {
       // Ensure all variants have colorName filled using ColorNameConverter
       const variantsWithColorName = formData.variants.map((v) => ({
         ...v,
-        colorName: v.colorName && v.colorName.trim() !== "" ? v.colorName : ColorNameConverter(v.color),
+        colorName:
+          v.colorName && v.colorName.trim() !== ""
+            ? v.colorName
+            : ColorNameConverter(v.color),
       }));
 
       let dataToSend = new FormData();
@@ -204,27 +243,31 @@ const Product = () => {
       dataToSend.append("description", formData.description);
       dataToSend.append("category", formData.category);
       dataToSend.append("price", formData.price);
+      // --- UPDATED FORMDATA APPEND START ---
+      if (formData.strikePrice !== "") {
+        dataToSend.append("strikePrice", formData.strikePrice);
+      }
+      if (formData.percentageDiscount !== "") {
+        dataToSend.append("percentageDiscount", formData.percentageDiscount);
+      }
+      // --- UPDATED FORMDATA APPEND END ---
       dataToSend.append("isActive", formData.isActive ? "true" : "false");
       // Ensure 'variant' is always an array and matches backend expectations
       dataToSend.append("variant", JSON.stringify(variantsWithColorName));
 
-      
       formData.images.forEach((img) => {
-        if(img.file) {
-          dataToSend.append("images",img.file)
-          dataToSend.append("alts",img.alt || "")
+        if (img.file) {
+          dataToSend.append("images", img.file);
+          dataToSend.append("alts", img.alt || "");
 
-          if(img.public_id) {
-            dataToSend.append("replacePublicIds",img.public_id)
+          if (img.public_id) {
+            dataToSend.append("replacePublicIds", img.public_id);
           }
-        } else if(img.public_id) {
+        } else if (img.public_id) {
           // existing image that the user didn't touch
-          dataToSend.append("existingImages",img.public_id)
+          dataToSend.append("existingImages", img.public_id);
         }
-      })
-      
-      
-      
+      });
 
       // Fetch token from localStorage
       const token = localStorage.getItem("token");
@@ -236,11 +279,9 @@ const Product = () => {
       };
 
       if (editingId) {
-
         for (const pair of dataToSend.entries()) {
-  console.log(pair[0], pair[1]);
-}
-
+          console.log(pair[0], pair[1]);
+        }
 
         await axios.put(`${API_URL}/${editingId}`, dataToSend, config);
         setSuccessMsg("Product updated successfully!");
@@ -251,11 +292,11 @@ const Product = () => {
       resetForm();
       fetchProducts();
     } catch (error) {
-      console.log(error)
+      console.log(error);
       setFormError(
         error?.response?.data?.message ||
-        error?.message ||
-        "Error saving product"
+          error?.message ||
+          "Error saving product"
       );
     }
     setLoading(false);
@@ -278,8 +319,8 @@ const Product = () => {
       } catch (error) {
         setFormError(
           error?.response?.data?.message ||
-          error?.message ||
-          "Error deleting product"
+            error?.message ||
+            "Error deleting product"
         );
       }
       setLoading(false);
@@ -291,19 +332,29 @@ const Product = () => {
       name: product.name || "",
       description: product.description || "",
       images: product.images
-      ? product.images.map((img) => ({ file: null, url: img.url, alt: img.alt || "",  public_id: img.public_id }))
-      : [{ file: null, alt: "" }],
+        ? product.images.map((img) => ({
+            file: null,
+            url: img.url,
+            alt: img.alt || "",
+            public_id: img.public_id,
+          }))
+        : [{ file: null, alt: "" }],
       category: product.category?._id || "",
       price: product.price || "",
-      variants: normalizeVariants(product.variant).length > 0
-        ? normalizeVariants(product.variant).map((v) => ({
-            color: v.color || "#000000",
-            colorName: v.colorName || ColorNameConverter(v.color || "#000000"),
-            sku: v.sku || "",
-            stock: v.stock || "",
-            size: v.size || "",
-          }))
-        : [defaultVariantRow()],
+      // --- UPDATED HANDLEEDIT START ---
+      strikePrice: product.strikePrice || "",
+      percentageDiscount: product.percentageDiscount || "",
+      // --- UPDATED HANDLEEDIT END ---
+      variants:
+        normalizeVariants(product.variant).length > 0
+          ? normalizeVariants(product.variant).map((v) => ({
+              color: v.color || "#000000",
+              colorName: v.colorName || ColorNameConverter(v.color || "#000000"),
+              sku: v.sku || "",
+              stock: v.stock || "",
+              size: v.size || "",
+            }))
+          : [defaultVariantRow()],
       isActive: product.isActive ?? true,
     });
     setEditingId(product._id);
@@ -337,7 +388,7 @@ const Product = () => {
         >
           <div
             className="relative bg-white rounded shadow-lg p-4"
-            onClick={e => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
           >
             <button
               className="absolute top-2 right-2 text-gray-700 hover:text-red-600 text-2xl font-bold"
@@ -352,7 +403,9 @@ const Product = () => {
               className="max-w-[80vw] max-h-[80vh] object-contain rounded"
             />
             {imageView.alt && (
-              <div className="mt-2 text-center text-gray-600 text-sm">{imageView.alt}</div>
+              <div className="mt-2 text-center text-gray-600 text-sm">
+                {imageView.alt}
+              </div>
             )}
           </div>
         </div>
@@ -372,83 +425,167 @@ const Product = () => {
             </button>
             <h2 className="text-3xl font-extrabold mb-8 text-pink-700 tracking-tight flex items-center gap-2">
               <span className="inline-block bg-pink-100 text-pink-700 px-3 py-1 rounded-lg shadow-sm text-lg">
-                <svg className="inline-block w-6 h-6 mr-1 text-pink-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M3 7V6a4 4 0 014-4h10a4 4 0 014 4v1M3 7v11a4 4 0 004 4h10a4 4 0 004-4V7M3 7h18"></path></svg>
+                <svg
+                  className="inline-block w-6 h-6 mr-1 text-pink-500"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  viewBox="0 0 24 24"
+                >
+                  <path d="M3 7V6a4 4 0 014-4h10a4 4 0 014 4v1M3 7v11a4 4 0 004 4h10a4 4 0 004-4V7M3 7h18"></path>
+                </svg>
                 {editingId ? "Edit Product" : "Add Product"}
               </span>
             </h2>
             {formError && (
               <div className="bg-red-50 border border-red-200 text-red-700 px-6 py-3 mb-4 rounded-lg flex items-center gap-2 shadow">
-                <svg className="w-5 h-5 text-red-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 9v2m0 4h.01M21 12A9 9 0 113 12a9 9 0 0118 0z"></path></svg>
+                <svg
+                  className="w-5 h-5 text-red-400"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  viewBox="0 0 24 24"
+                >
+                  <path d="M12 9v2m0 4h.01M21 12A9 9 0 113 12a9 9 0 0118 0z"></path>
+                </svg>
                 <span>{formError}</span>
               </div>
             )}
             {successMsg && (
               <div className="bg-green-50 border border-green-200 text-green-700 px-6 py-3 mb-4 rounded-lg flex items-center gap-2 shadow">
-                <svg className="w-5 h-5 text-green-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"></path></svg>
+                <svg
+                  className="w-5 h-5 text-green-400"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  viewBox="0 0 24 24"
+                >
+                  <path d="M5 13l4 4L19 7"></path>
+                </svg>
                 <span>{successMsg}</span>
               </div>
             )}
 
             <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div>
-                <label className="block text-gray-700 font-semibold mb-2">Product Name</label>
+                <label className="block text-gray-700 font-semibold mb-2">
+                  Product Name
+                </label>
                 <input
                   type="text"
                   name="name"
                   value={formData.name}
                   onChange={handleChange}
                   className="w-full px-4 py-3 border border-pink-200 rounded-xl bg-pink-50/50
-                    focus:outline-none focus:ring-2 focus:ring-pink-400
-                    focus:border-pink-400 transition shadow"
+                     focus:outline-none focus:ring-2 focus:ring-pink-400
+                     focus:border-pink-400 transition shadow"
                   placeholder="Enter product name"
                   required
                 />
               </div>
               <div>
-                <label className="block text-gray-700 font-semibold mb-2">Category</label>
+                <label className="block text-gray-700 font-semibold mb-2">
+                  Category
+                </label>
                 <select
                   name="category"
                   value={formData.category}
                   onChange={handleChange}
                   className="w-full px-4 py-3 border border-blue-200 rounded-xl bg-blue-50/50
-                    focus:outline-none focus:ring-2 focus:ring-blue-400
-                    focus:border-blue-400 transition shadow"
+                     focus:outline-none focus:ring-2 focus:ring-blue-400
+                     focus:border-blue-400 transition shadow"
                   required
                 >
                   <option value="">Select Category</option>
                   {categories.map((cat) => (
-                    <option key={cat._id} value={cat._id}>{cat.name}</option>
+                    <option key={cat._id} value={cat._id}>
+                      {cat.name}
+                    </option>
                   ))}
                 </select>
               </div>
-              <div>
-                <label className="block text-gray-700 font-semibold mb-2">Price</label>
-                <input
-                  type="number"
-                  name="price"
-                  value={formData.price}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 border border-yellow-200 rounded-xl bg-yellow-50/50
-                    focus:outline-none focus:ring-2 focus:ring-yellow-400
-                    focus:border-yellow-400 transition shadow"
-                  min="0"
-                  placeholder="₹0"
-                  required
-                />
+              <div className="grid grid-cols-3 gap-4">
+                {/* Current Price */}
+                <div>
+                  <label className="block text-gray-700 font-semibold mb-2">
+                    Price (₹)
+                  </label>
+                  <input
+                    type="number"
+                    name="price"
+                    value={formData.price}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-yellow-200 rounded-xl bg-yellow-50/50
+                       focus:outline-none focus:ring-2 focus:ring-yellow-400
+                       focus:border-yellow-400 transition shadow"
+                    min="0"
+                    placeholder="₹0"
+                    required
+                  />
+                </div>
+
+                {/* Strike Price (Original Price) - NEW FIELD */}
+                <div>
+                  <label className="block text-gray-700 font-semibold mb-2">
+                    Strike Price (₹)
+                  </label>
+                  <input
+                    type="number"
+                    name="strikePrice"
+                    value={formData.strikePrice}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-orange-200 rounded-xl bg-orange-50/50
+                       focus:outline-none focus:ring-2 focus:ring-orange-400
+                       focus:border-orange-400 transition shadow"
+                    min="0"
+                    placeholder="₹0 (Original)"
+                  />
+                </div>
+
+                {/* Discount Percentage - NEW FIELD */}
+                <div>
+                  <label className="block text-gray-700 font-semibold mb-2">
+                    Discount (%)
+                  </label>
+                  <input
+                    type="number"
+                    name="percentageDiscount"
+                    value={formData.percentageDiscount}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-red-200 rounded-xl bg-red-50/50
+                       focus:outline-none focus:ring-2 focus:ring-red-400
+                       focus:border-red-400 transition shadow"
+                    min="0"
+                    max="100"
+                    placeholder="0-100%"
+                  />
+                </div>
               </div>
 
               {/* Variants Table */}
               <div className="md:col-span-2">
-                <label className="block text-gray-700 font-semibold mb-2">Variants</label>
+                <label className="block text-gray-700 font-semibold mb-2">
+                  Variants
+                </label>
                 <div className="overflow-x-auto">
                   <table className="min-w-full border border-blue-200 rounded-xl bg-blue-50/30 shadow-sm">
                     <thead>
                       <tr>
-                        <th className="px-3 py-2 text-left text-xs font-bold text-blue-700">Color</th>
-                        <th className="px-3 py-2 text-left text-xs font-bold text-blue-700">Color Name</th>
-                        <th className="px-3 py-2 text-left text-xs font-bold text-blue-700">SKU</th>
-                        <th className="px-3 py-2 text-left text-xs font-bold text-blue-700">Stock</th>
-                        <th className="px-3 py-2 text-left text-xs font-bold text-blue-700">Size</th>
+                        <th className="px-3 py-2 text-left text-xs font-bold text-blue-700">
+                          Color
+                        </th>
+                        <th className="px-3 py-2 text-left text-xs font-bold text-blue-700">
+                          Color Name
+                        </th>
+                        <th className="px-3 py-2 text-left text-xs font-bold text-blue-700">
+                          SKU
+                        </th>
+                        <th className="px-3 py-2 text-left text-xs font-bold text-blue-700">
+                          Stock
+                        </th>
+                        <th className="px-3 py-2 text-left text-xs font-bold text-blue-700">
+                          Size
+                        </th>
                         <th className="px-3 py-2"></th>
                       </tr>
                     </thead>
@@ -460,7 +597,9 @@ const Product = () => {
                             <input
                               type="color"
                               value={variant.color || "#000000"}
-                              onChange={e => handleVariantRowChange(idx, "color", e.target.value)}
+                              onChange={(e) =>
+                                handleVariantRowChange(idx, "color", e.target.value)
+                              }
                               className="w-8 h-8 border-2 border-gray-300 rounded-full cursor-pointer shadow"
                             />
                           </td>
@@ -468,8 +607,17 @@ const Product = () => {
                           <td className="px-3 py-2">
                             <input
                               type="text"
-                              value={variant.colorName || ColorNameConverter(variant.color)}
-                              onChange={e => handleVariantRowChange(idx, "colorName", e.target.value)}
+                              value={
+                                variant.colorName ||
+                                ColorNameConverter(variant.color)
+                              }
+                              onChange={(e) =>
+                                handleVariantRowChange(
+                                  idx,
+                                  "colorName",
+                                  e.target.value
+                                )
+                              }
                               className="px-2 py-1 border border-gray-300 bg-gray-100 rounded-lg shadow-sm w-28 text-gray-700 font-medium"
                             />
                             <button
@@ -477,7 +625,9 @@ const Product = () => {
                               className="ml-2 px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-medium hover:bg-blue-200 transition"
                               title="Auto-fill color name"
                               onClick={() => {
-                                const autoName = ColorNameConverter(variant.color);
+                                const autoName = ColorNameConverter(
+                                  variant.color
+                                );
                                 handleVariantRowChange(idx, "colorName", autoName);
                               }}
                               tabIndex={-1}
@@ -491,7 +641,9 @@ const Product = () => {
                               type="text"
                               placeholder="SKU"
                               value={variant.sku}
-                              onChange={e => handleVariantRowChange(idx, "sku", e.target.value)}
+                              onChange={(e) =>
+                                handleVariantRowChange(idx, "sku", e.target.value)
+                              }
                               className="px-2 py-1 border border-purple-200 rounded-lg bg-purple-50/50 focus:ring-2 focus:ring-purple-400 w-24"
                               required
                             />
@@ -502,7 +654,9 @@ const Product = () => {
                               type="number"
                               placeholder="Stock"
                               value={variant.stock}
-                              onChange={e => handleVariantRowChange(idx, "stock", e.target.value)}
+                              onChange={(e) =>
+                                handleVariantRowChange(idx, "stock", e.target.value)
+                              }
                               className="px-2 py-1 border border-green-200 rounded-lg bg-green-50/50 focus:ring-2 focus:ring-green-400 w-20"
                               min="0"
                               required
@@ -514,7 +668,9 @@ const Product = () => {
                               type="text"
                               placeholder="Size"
                               value={variant.size}
-                              onChange={e => handleVariantRowChange(idx, "size", e.target.value)}
+                              onChange={(e) =>
+                                handleVariantRowChange(idx, "size", e.target.value)
+                              }
                               className="px-2 py-1 border border-indigo-200 rounded-full bg-indigo-50/50 focus:ring-2 focus:ring-indigo-400 w-20"
                               required
                             />
@@ -540,10 +696,18 @@ const Product = () => {
                     type="button"
                     onClick={addVariantRow}
                     className="mt-2 bg-gradient-to-r from-green-400 to-green-500 hover:from-green-500 hover:to-green-600 active:scale-95
-                      text-white font-semibold px-4 py-2 rounded-xl shadow-lg
-                      transition-all duration-200 ease-in-out flex items-center gap-2"
+                     text-white font-semibold px-4 py-2 rounded-xl shadow-lg
+                     transition-all duration-200 ease-in-out flex items-center gap-2"
                   >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4"></path></svg>
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      viewBox="0 0 24 24"
+                    >
+                      <path d="M12 4v16m8-8H4"></path>
+                    </svg>
                     Add Variant
                   </button>
                 </div>
@@ -552,29 +716,42 @@ const Product = () => {
               {/* Images */}
               <div className="col-span-1 md:col-span-2">
                 <h4 className="font-bold text-gray-700 mb-3 text-lg flex items-center gap-2">
-                  <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M3 7V6a4 4 0 014-4h10a4 4 0 014 4v1M3 7v11a4 4 0 004 4h10a4 4 0 004-4V7M3 7h18"></path></svg>
+                  <svg
+                    className="w-5 h-5 text-blue-400"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="M3 7V6a4 4 0 014-4h10a4 4 0 014 4v1M3 7v11a4 4 0 004 4h10a4 4 0 004-4V7M3 7h18"></path>
+                  </svg>
                   Product Images
                 </h4>
                 <div className="space-y-3">
                   {formData.images.map((img, index) => (
-                    <div key={index} className="flex gap-3 items-center bg-white border border-blue-100 rounded-xl px-3 py-2 shadow-sm">
+                    <div
+                      key={index}
+                      className="flex gap-3 items-center bg-white border border-blue-100 rounded-xl px-3 py-2 shadow-sm"
+                    >
                       <input
                         type="file"
                         accept="image/*"
                         onChange={(e) => handleImageChange(index, "file", e)}
                         className="flex-1 px-3 py-2 border border-gray-200 rounded-lg
-                          focus:outline-none focus:ring-2 focus:ring-blue-400
-                          focus:border-blue-400 transition shadow-sm bg-blue-50/50"
+                         focus:outline-none focus:ring-2 focus:ring-blue-400
+                         focus:border-blue-400 transition shadow-sm bg-blue-50/50"
                         required={!editingId}
                       />
                       <input
                         type="text"
                         placeholder="Alt Text"
                         value={img.alt}
-                        onChange={(e) => handleImageChange(index, "alt", e.target.value)}
+                        onChange={(e) =>
+                          handleImageChange(index, "alt", e.target.value)
+                        }
                         className="flex-1 px-3 py-2 border border-gray-200 rounded-lg
-                          focus:outline-none focus:ring-2 focus:ring-blue-400
-                          focus:border-blue-400 transition shadow-sm bg-blue-50/50"
+                         focus:outline-none focus:ring-2 focus:ring-blue-400
+                         focus:border-blue-400 transition shadow-sm bg-blue-50/50"
                       />
                       {formData.images.length > 1 && (
                         <button
@@ -593,22 +770,32 @@ const Product = () => {
                   type="button"
                   onClick={addImageField}
                   className="mt-3 bg-gradient-to-r from-green-400 to-green-500 hover:from-green-500 hover:to-green-600 active:scale-95
-                    text-white font-semibold px-4 py-2 rounded-xl shadow-lg
-                    transition-all duration-200 ease-in-out flex items-center gap-2"
+                     text-white font-semibold px-4 py-2 rounded-xl shadow-lg
+                     transition-all duration-200 ease-in-out flex items-center gap-2"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4"></path></svg>
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="M12 4v16m8-8H4"></path>
+                  </svg>
                   Add Image
                 </button>
               </div>
-              <div>
-                <label className="block text-gray-700 font-semibold mb-2">Description</label>
+              <div className="md:col-span-2">
+                <label className="block text-gray-700 font-semibold mb-2">
+                  Description
+                </label>
                 <textarea
                   name="description"
                   value={formData.description}
                   onChange={handleChange}
                   className="w-full px-4 py-3 border border-gray-300 rounded-xl
-                    focus:outline-none focus:ring-2 focus:ring-pink-400
-                    focus:border-pink-400 transition shadow resize-none bg-pink-50/50"
+                     focus:outline-none focus:ring-2 focus:ring-pink-400
+                     focus:border-pink-400 transition shadow resize-none bg-pink-50/50"
                   placeholder="Describe the product..."
                   rows={4}
                   required
@@ -623,48 +810,105 @@ const Product = () => {
                   className="mr-3 accent-blue-600 w-5 h-5 rounded focus:ring-2 focus:ring-blue-400"
                   id="isActive"
                 />
-                <label htmlFor="isActive" className="text-gray-700 font-semibold select-none">Active</label>
+                <label
+                  htmlFor="isActive"
+                  className="text-gray-700 font-semibold select-none"
+                >
+                  Active
+                </label>
               </div>
               <div className="col-span-1 md:col-span-2 flex gap-4 mt-6 justify-end">
                 <button
                   type="submit"
                   className="bg-gradient-to-r from-pink-500 to-pink-600 hover:from-pink-600 hover:to-pink-700 text-white font-bold px-4 py-1 rounded-xl shadow-lg
-                    transition-all duration-200 ease-in-out active:scale-95 flex items-center gap-2"
+                     transition-all duration-200 ease-in-out active:scale-95 flex items-center gap-2"
                   disabled={loading}
                 >
-                  {editingId ? (loading ? (
+                  {editingId ? (
+                    loading ? (
+                      <>
+                        <svg
+                          className="w-5 h-5 animate-spin"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
+                          <path
+                            d="M4 12a8 8 0 018-8"
+                            strokeOpacity="0.75"
+                            strokeLinecap="round"
+                          />
+                        </svg>
+                        Updating...
+                      </>
+                    ) : (
+                      <>
+                        <svg
+                          className="w-5 h-5"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          viewBox="0 0 24 24"
+                        >
+                          <path d="M5 13l4 4L19 7"></path>
+                        </svg>
+                        Update Product
+                      </>
+                    )
+                  ) : loading ? (
                     <>
-                      <svg className="w-5 h-5 animate-spin" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" strokeOpacity="0.25"/><path d="M4 12a8 8 0 018-8" strokeOpacity="0.75" strokeLinecap="round"/></svg>
-                      Updating...
-                    </>
-                  ) : (
-                    <>
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"></path></svg>
-                      Update Product
-                    </>
-                  )) : (loading ? (
-                    <>
-                      <svg className="w-5 h-5 animate-spin" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" strokeOpacity="0.25"/><path d="M4 12a8 8 0 018-8" strokeOpacity="0.75" strokeLinecap="round"/></svg>
+                      <svg
+                        className="w-5 h-5 animate-spin"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
+                        <path
+                          d="M4 12a8 8 0 018-8"
+                          strokeOpacity="0.75"
+                          strokeLinecap="round"
+                        />
+                      </svg>
                       Adding...
                     </>
                   ) : (
                     <>
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4"></path></svg>
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        viewBox="0 0 24 24"
+                      >
+                        <path d="M12 4v16m8-8H4"></path>
+                      </svg>
                       Add Product
                     </>
-                  ))}
+                  )}
                 </button>
                 {editingId && (
                   <button
                     type="button"
                     className="bg-gradient-to-r from-orange-400 to-orange-500 text-white font-bold px-6 py-2 rounded-xl shadow-lg
-                      hover:from-orange-500 hover:to-orange-600 active:scale-95
-                      transition-all duration-200 ease-in-out
-                      disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                       hover:from-orange-500 hover:to-orange-600 active:scale-95
+                       transition-all duration-200 ease-in-out
+                       disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                     onClick={resetForm}
                     disabled={loading}
                   >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"></path></svg>
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      viewBox="0 0 24 24"
+                    >
+                      <path d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
                     Cancel Edit
                   </button>
                 )}
@@ -689,9 +933,17 @@ const Product = () => {
               type="button"
               onClick={openAddForm}
               className="bg-gradient-to-r from-pink-500 to-pink-600 hover:from-pink-600 hover:to-pink-700 text-white font-bold px-6 py-2 rounded-xl shadow-lg
-                transition-all duration-200 ease-in-out active:scale-95 flex items-center gap-2"
+                 transition-all duration-200 ease-in-out active:scale-95 flex items-center gap-2"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4"></path></svg>
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+              >
+                <path d="M12 4v16m8-8H4"></path>
+              </svg>
               Add Product
             </button>
           </div>
@@ -717,7 +969,7 @@ const Product = () => {
                       position: "sticky",
                       top: 0,
                       zIndex: 10,
-                      background: "#DBEAFE",
+                      background: "#DBEAFE", // bg-blue-100
                     }}
                   >
                     Category
@@ -728,7 +980,7 @@ const Product = () => {
                       position: "sticky",
                       top: 0,
                       zIndex: 10,
-                      background: "#DBEAFE",
+                      background: "#DBEAFE", // bg-blue-100
                     }}
                   >
                     Price
@@ -739,7 +991,18 @@ const Product = () => {
                       position: "sticky",
                       top: 0,
                       zIndex: 10,
-                      background: "#DBEAFE",
+                      background: "#DBEAFE", // bg-blue-100
+                    }}
+                  >
+                    Discount
+                  </th>
+                  <th
+                    className="px-5 py-3 text-left font-semibold text-blue-900 bg-blue-100"
+                    style={{
+                      position: "sticky",
+                      top: 0,
+                      zIndex: 10,
+                      background: "#DBEAFE", // bg-blue-100
                     }}
                   >
                     Variants
@@ -750,29 +1013,18 @@ const Product = () => {
                       position: "sticky",
                       top: 0,
                       zIndex: 10,
-                      background: "#DBEAFE",
-                    }}
-                  >
-                    Images
-                  </th>
-                  <th
-                    className="px-5 py-3 text-left font-semibold text-blue-900 bg-blue-100"
-                    style={{
-                      position: "sticky",
-                      top: 0,
-                      zIndex: 10,
-                      background: "#DBEAFE",
+                      background: "#DBEAFE", // bg-blue-100
                     }}
                   >
                     Active
                   </th>
                   <th
-                    className="px-5 py-3 text-left font-semibold text-blue-900 bg-blue-100 rounded-tr-xl"
+                    className="px-5 py-3 text-center font-semibold text-blue-900 bg-blue-100 rounded-tr-xl"
                     style={{
                       position: "sticky",
                       top: 0,
                       zIndex: 10,
-                      background: "#DBEAFE",
+                      background: "#DBEAFE", // bg-blue-100
                     }}
                   >
                     Actions
@@ -780,132 +1032,127 @@ const Product = () => {
                 </tr>
               </thead>
               <tbody>
-                {products.map((prod, rowIdx) => (
-                  <tr
-                    key={prod._id}
-                    className={`transition-all duration-200 bg-white hover:shadow-lg hover:scale-[1.01] group ${
-                      rowIdx % 2 === 0 ? "bg-white" : "bg-blue-50"
-                    }`}
-                  >
-                    <td className="px-5 py-3 rounded-l-xl border-y border-blue-100 font-semibold text-gray-800 group-hover:bg-blue-50 transition">{prod.name}</td>
-                    <td className="px-5 py-3 border-y border-blue-100 text-gray-700 group-hover:bg-blue-50 transition">{prod.category?.name || "—"}</td>
-                    <td className="px-5 py-3 border-y border-blue-100 text-pink-600 font-bold group-hover:bg-blue-50 transition">₹{prod.price}</td>
-                    {/* Variants column: show all variant details */}
-                    <td className="px-5 py-3 border-y border-blue-100 group-hover:bg-blue-50 transition">
-                      {Array.isArray(prod.variant) && prod.variant.length > 0 ? (
-                        <div className="flex flex-col gap-3">
-                          {prod.variant.map((v, idx) => (
-                            <div key={idx} className="border border-blue-100 rounded-lg p-2 bg-white/80 mb-1">
-                              <div className="flex items-center gap-2 mb-1">
-                                {/* Color circle and name */}
-                                {v.color && (
-                                  <span
-                                    className="w-5 h-5 rounded-full border-2 border-blue-200 shadow-sm inline-block"
-                                    style={{ backgroundColor: v.color }}
-                                    title={v.colorName || ColorNameConverter(v.color) || v.color}
-                                  ></span>
-                                )}
-                                <span className="text-xs font-medium text-gray-700">
-                                  {v.colorName || ColorNameConverter(v.color) || v.color || "_"}
-                                </span>
-                              </div>
-                              <div className="flex flex-wrap gap-2 items-center mb-1">
-                                {/* Size as badge */}
-                                {v.size && (
-                                  <span
-                                    className="px-3 py-1 rounded-full bg-gradient-to-r from-blue-200 to-pink-200 text-blue-900 text-xs font-semibold shadow"
-                                  >
-                                    {v.size}
-                                  </span>
-                                )}
-                              </div>
-                              <div className="flex flex-wrap gap-2 items-center">
-                                {/* SKU and Stock */}
-                                <span className="inline-block bg-pink-100 text-pink-700 px-2 py-0.5 rounded font-medium text-xs">
-                                  SKU: {v.sku || "_"}
-                                </span>
-                                <span className="inline-block bg-blue-100 text-blue-700 px-2 py-0.5 rounded font-medium text-xs">
-                                  Stock: {v.stock !== undefined && v.stock !== null && v.stock !== "" ? v.stock : "_"}
-                                </span>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <span className="text-gray-400">_</span>
-                      )}
-                    </td>
-                    {/* Images */}
-                    <td className="px-5 py-3 border-y border-blue-100 group-hover:bg-blue-50 transition">
-                      <div className="flex gap-2 flex-wrap">
-                        {prod.images?.length > 0 ? (
-                          prod.images.map((img, i) => (
-                            <button
-                              key={i}
-                              type="button"
-                              onClick={() => openImageView(img.url, img.alt)}
-                              className="focus:outline-none hover:scale-110 transition"
-                              title={img.alt}
-                            >
-                              <img
-                                src={img.url}
-                                alt={img.alt}
-                                className="h-12 w-12 object-cover border-2 border-blue-200 rounded-lg shadow"
-                              />
-                            </button>
-                          ))
-                        ) : (
-                          <span className="text-gray-400">_</span>
-                        )}
-                      </div>
-                    </td>
-                    {/* Active */}
-                    <td className="px-5 py-3 border-y border-blue-100 group-hover:bg-blue-50 transition">
-                      <span
-                        className={`px-3 py-1 rounded-full text-xs font-bold shadow ${
-                          prod.isActive
-                            ? "bg-green-100 text-green-700 border border-green-200"
-                            : "bg-red-100 text-red-700 border border-red-200"
-                        }`}
-                      >
-                        {prod.isActive ? "Yes" : "No"}
-                      </span>
-                    </td>
-                    {/* Actions */}
-                    <td className="px-5 py-3 rounded-r-xl border-y border-blue-100 group-hover:bg-blue-50 transition">
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => handleEdit(prod)}
-                          className="bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-white px-2 py-1 rounded-lg shadow font-semibold transition-all duration-150 active:scale-95"
-                        >
-                          <span className="material-icons align-middle text-base mr-1">Edit</span>
-                        </button>
-                        <button
-                          onClick={() => handleDelete(prod._id)}
-                          className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white px-2 py-1 rounded-lg shadow font-semibold transition-all duration-150 active:scale-95"
-                        >
-                          <span className="material-icons align-middle text-base mr-1">Delete</span>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-                {products.length === 0 && (
+                {loading ? (
                   <tr>
-                    <td colSpan="7" className="text-center text-gray-500 py-8 bg-white rounded-b-xl">
-                      {loading ? (
-                        <span className="flex items-center justify-center gap-2">
-                          <svg className="animate-spin h-5 w-5 text-blue-400" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-                          </svg>
-                          Loading...
+                    <td colSpan="7" className="text-center py-8">
+                      <div className="flex justify-center items-center">
+                        <svg
+                          className="w-8 h-8 mr-3 animate-spin text-pink-500"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
+                          <path
+                            d="M4 12a8 8 0 018-8"
+                            strokeOpacity="0.75"
+                            strokeLinecap="round"
+                          />
+                        </svg>
+                        <span className="text-lg text-gray-700">
+                          Loading Products...
                         </span>
-                      ) : (
-                        "No products available"
-                      )}
+                      </div>
                     </td>
                   </tr>
+                ) : (
+                  products.map((product) => (
+                    <tr
+                      key={product._id}
+                      className="bg-white hover:bg-pink-50 transition duration-150 ease-in-out shadow-md rounded-xl"
+                    >
+                      <td className="px-5 py-4 whitespace-nowrap rounded-l-xl">
+                        <div className="flex items-center">
+                          <img
+                            src={product.images[0]?.url || "placeholder.jpg"}
+                            alt={product.name}
+                            className="w-10 h-10 object-cover rounded-md mr-3 cursor-pointer border border-gray-200 shadow-sm"
+                            onClick={() =>
+                              openImageView(
+                                product.images[0]?.url,
+                                product.images[0]?.alt || product.name
+                              )
+                            }
+                          />
+                          <span className="font-medium text-gray-800">
+                            {product.name}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-5 py-4 whitespace-nowrap">
+                        <span className="text-gray-600 bg-blue-100/70 px-3 py-1 rounded-full text-xs font-medium">
+                          {product.category?.name || "N/A"}
+                        </span>
+                      </td>
+                      <td className="px-5 py-4 whitespace-nowrap">
+                        <div className="flex flex-col">
+                            {product.strikePrice && product.strikePrice > product.price && (
+                                <span className="text-xs text-gray-400 line-through">₹{Number(product.strikePrice).toFixed(2)}</span>
+                            )}
+                            <span className="font-bold text-green-700">₹{Number(product.price).toFixed(2)}</span>
+                        </div>
+                      </td>
+                      <td className="px-5 py-4 whitespace-nowrap">
+                        {product.percentageDiscount > 0 ? (
+                            <span className="text-sm font-semibold text-red-600 bg-red-100/70 px-3 py-1 rounded-full">
+                                {product.percentageDiscount}% OFF
+                            </span>
+                        ) : (
+                            <span className="text-sm text-gray-500">No Discount</span>
+                        )}
+                      </td>
+                      <td className="px-5 py-4 whitespace-nowrap">
+                        <span className="text-sm text-indigo-600 font-semibold">
+                          {product.variant?.length || 0}
+                        </span>{" "}
+                        variants
+                      </td>
+                      <td className="px-5 py-4 whitespace-nowrap">
+                        <span
+                          className={`inline-flex px-3 py-1 text-xs font-semibold leading-5 rounded-full ${
+                            product.isActive
+                              ? "bg-green-100 text-green-800"
+                              : "bg-red-100 text-red-800"
+                          }`}
+                        >
+                          {product.isActive ? "Yes" : "No"}
+                        </span>
+                      </td>
+                      <td className="px-5 py-4 whitespace-nowrap text-right text-sm font-medium rounded-r-xl">
+                        <button
+                          onClick={() => handleEdit(product)}
+                          className="text-indigo-600 hover:text-indigo-900 mr-4 transition duration-150 ease-in-out p-2 rounded-full hover:bg-indigo-50"
+                          title="Edit"
+                        >
+                          <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            viewBox="0 0 24 24"
+                          >
+                            <path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                          </svg>
+                        </button>
+                        <button
+                          onClick={() => handleDelete(product._id)}
+                          className="text-red-600 hover:text-red-900 transition duration-150 ease-in-out p-2 rounded-full hover:bg-red-50"
+                          title="Delete"
+                        >
+                          <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            viewBox="0 0 24 24"
+                          >
+                            <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                          </svg>
+                        </button>
+                      </td>
+                    </tr>
+                  ))
                 )}
               </tbody>
             </table>
