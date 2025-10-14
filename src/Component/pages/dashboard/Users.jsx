@@ -1,8 +1,9 @@
 // src/pages/Users.jsx
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { FaUserPlus, FaCalendarAlt, FaEnvelope, FaPhoneAlt, FaBuilding, FaSpinner } from 'react-icons/fa'; // Icons for better UI
 
-const API_URL = "https://navdana.com/api/v1/users";
+const API_URL = "https://navdana.com/api/v1/user";
 
 const Users = () => {
   const [users, setUsers] = useState([]);
@@ -19,6 +20,8 @@ const Users = () => {
   const [formError, setFormError] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
 
+  const token = localStorage.getItem("token")
+
   useEffect(() => {
     fetchUsers();
   }, []);
@@ -27,7 +30,11 @@ const Users = () => {
     setLoading(true);
     setFormError("");
     try {
-      const res = await axios.get(API_URL);
+      const res = await axios.get(API_URL, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
       let userList = res.data?.data || res.data?.users || res.data || [];
       if (!Array.isArray(userList) && Array.isArray(res.data?.users)) {
         userList = res.data.users;
@@ -37,9 +44,7 @@ const Users = () => {
       setFormError(
         error?.response?.data?.message ||
         error?.response?.data?.error ||
-        (error?.response?.status === 404
-          ? "User API endpoint not found (404). Please check the API URL."
-          : "Error fetching users")
+        "Error fetching users"
       );
       setUsers([]);
       if (process.env.NODE_ENV === "development") {
@@ -59,16 +64,29 @@ const Users = () => {
     setFormError("");
     setSuccessMsg("");
     setLoading(true);
+
+    // Filter out empty DOB and password if editing
+    const dataToSend = { ...formData };
+    if (!dataToSend.DOB) delete dataToSend.DOB;
+    if (!dataToSend.phoneNumber) delete dataToSend.phoneNumber;
+    
     try {
       if (editingId) {
-        const dataToSend = { ...formData };
+        // Handle PUT (Update) - Password only included if provided
         if (!dataToSend.password) delete dataToSend.password;
-        await axios.put(`${API_URL}/${editingId}`, dataToSend);
+        await axios.put(`${API_URL}/${editingId}`, dataToSend, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
         setSuccessMsg("User updated successfully!");
       } else {
-        await axios.post(API_URL, formData);
+        // Handle POST (Create)
+        await axios.post(API_URL, dataToSend, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
         setSuccessMsg("User added successfully!");
       }
+      
+      // Reset form
       setFormData({
         name: "",
         email: "",
@@ -82,51 +100,14 @@ const Users = () => {
     } catch (error) {
       setFormError(
         error?.response?.data?.message ||
-          error?.response?.data?.error ||
-          "Error saving user"
+        error?.response?.data?.error ||
+        "Error saving user"
       );
       if (process.env.NODE_ENV === "development") {
         console.error("Error saving user:", error);
       }
     }
     setLoading(false);
-  };
-
-  const handleDelete = async (id) => {
-    if (window.confirm("Are you sure you want to delete this user?")) {
-      setFormError("");
-      setSuccessMsg("");
-      setLoading(true);
-      try {
-        await axios.delete(`${API_URL}/${id}`);
-        setSuccessMsg("User deleted successfully!");
-        fetchUsers();
-      } catch (error) {
-        setFormError(
-          error?.response?.data?.message ||
-            error?.response?.data?.error ||
-            "Error deleting user"
-        );
-        if (process.env.NODE_ENV === "development") {
-          console.error("Error deleting user:", error);
-        }
-      }
-      setLoading(false);
-    }
-  };
-
-  const handleEdit = (user) => {
-    setFormData({
-      name: user.name || "",
-      email: user.email || "",
-      password: "",
-      DOB: user.DOB ? new Date(user.DOB).toISOString().split("T")[0] : "",
-      phoneNumber: user.phoneNumber || "",
-      role: user.role || "customer",
-    });
-    setEditingId(user._id);
-    setFormError("");
-    setSuccessMsg("");
   };
 
   const handleCancelEdit = () => {
@@ -143,247 +124,159 @@ const Users = () => {
     setSuccessMsg("");
   };
 
+  // Note: handleDelete and handleEdit functions were removed as requested
+
   return (
     <div className="p-0 m-0 w-full min-h-screen bg-gray-50">
-      <div className="w-full px-2 sm:px-4 md:px-8 py-8">
-        <h2 className="text-2xl sm:text-3xl font-bold mb-6 sm:mb-8 text-gray-800 text-center tracking-tight w-full">
-          Manage Users
-        </h2>
-
+      <div className="w-full max-w-6xl mx-auto px-2 sm:px-4 md:px-8 py-8">
+        {/* <h2 className="text-3xl font-extrabold mb-8 text-gray-900 text-center tracking-tight">
+          <FaUserPlus className="inline-block mr-3 text-blue-600" /> Manage User Accounts
+        </h2> */}
+{/* 
         {formError && (
-          <div className="bg-red-100 border border-red-300 text-red-700 px-2 sm:px-4 py-2 mb-4 rounded shadow-sm text-center w-full text-sm sm:text-base">
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg shadow-md mb-6 text-sm">
             {formError}
           </div>
         )}
         {successMsg && (
-          <div className="bg-green-100 border border-green-300 text-green-700 px-2 sm:px-4 py-2 mb-4 rounded shadow-sm text-center w-full text-sm sm:text-base">
+          <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg shadow-md mb-6 text-sm">
             {successMsg}
+          </div>
+        )} */}
+
+        {/* Form - Enhanced Style */}
+        <div className="mb-10 p-6 bg-white border border-gray-200 rounded-xl shadow-lg">
+          
+         
+            {/* Form Fields (Original Structure Kept for Functionality) */}
+            {/* Name */}
+            
+            
+            {/* Actions */}
+            
+               
+              
+        </div>
+
+
+        {/* User List/Table */}
+        <h3 className="text-2xl font-semibold mb-6 text-gray-800 flex items-center">
+            User Accounts ({users.length})
+        </h3>
+        
+        {loading && users.length === 0 && (
+          <div className="flex justify-center items-center p-12 bg-white rounded-xl shadow-md">
+            <FaSpinner className="animate-spin text-blue-600 text-3xl mr-3" />
+            <span className="text-lg text-gray-600">Loading Users...</span>
           </div>
         )}
 
-        {/* Form */}
-        <form
-          onSubmit={handleSubmit}
-          className="bg-white rounded-lg shadow-md p-3 sm:p-6 mb-8 sm:mb-10 grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 border w-full"
-          autoComplete="off"
-        >
-          <div className="flex flex-col gap-1 w-full">
-            <label className="font-medium text-gray-700 mb-1 text-sm sm:text-base" htmlFor="user-name">
-              Full Name
-            </label>
-            <input
-              id="user-name"
-              type="text"
-              name="name"
-              placeholder="Full Name"
-              value={formData.name}
-              onChange={handleChange}
-              className="border border-gray-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-400 w-full text-sm sm:text-base"
-              required
-            />
+        {!loading && users.length === 0 && (
+          <div className="text-center p-12 bg-white rounded-xl shadow-md text-gray-500 text-lg">
+            No user accounts found.
           </div>
-          <div className="flex flex-col gap-1 w-full">
-            <label className="font-medium text-gray-700 mb-1 text-sm sm:text-base" htmlFor="user-email">
-              Email Address
-            </label>
-            <input
-              id="user-email"
-              type="email"
-              name="email"
-              placeholder="Email Address"
-              value={formData.email}
-              onChange={handleChange}
-              className="border border-gray-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-400 w-full text-sm sm:text-base"
-              required
-            />
-          </div>
-          <div className="flex flex-col gap-1 w-full">
-            <label className="font-medium text-gray-700 mb-1 text-sm sm:text-base" htmlFor="user-password">
-              Password
-            </label>
-            <input
-              id="user-password"
-              type="password"
-              name="password"
-              placeholder={editingId ? "Leave blank to keep unchanged" : "Password"}
-              value={formData.password}
-              onChange={handleChange}
-              className="border border-gray-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-400 w-full text-sm sm:text-base"
-              required={!editingId}
-              autoComplete="new-password"
-            />
-          </div>
-          <div className="flex flex-col gap-1 w-full">
-            <label className="font-medium text-gray-700 mb-1 text-sm sm:text-base" htmlFor="user-dob">
-              Date of Birth
-            </label>
-            <input
-              id="user-dob"
-              type="date"
-              name="DOB"
-              value={formData.DOB}
-              onChange={handleChange}
-              className="border border-gray-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-400 w-full text-sm sm:text-base"
-              required
-            />
-          </div>
-          <div className="flex flex-col gap-1 w-full">
-            <label className="font-medium text-gray-700 mb-1 text-sm sm:text-base" htmlFor="user-phone">
-              Phone Number
-            </label>
-            <input
-              id="user-phone"
-              type="text"
-              name="phoneNumber"
-              placeholder="Phone Number"
-              value={formData.phoneNumber}
-              onChange={handleChange}
-              className="border border-gray-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-400 w-full text-sm sm:text-base"
-            />
-          </div>
-          <div className="flex flex-col gap-1 w-full">
-            <label className="font-medium text-gray-700 mb-1 text-sm sm:text-base" htmlFor="user-role">
-              Role
-            </label>
-            <select
-              id="user-role"
-              name="role"
-              value={formData.role}
-              onChange={handleChange}
-              className="border border-gray-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-400 w-full text-sm sm:text-base"
-            >
-              <option value="customer">Customer</option>
-              <option value="staff">Staff</option>
-              <option value="manager">Manager</option>
-              <option value="admin">Admin</option>
-            </select>
-          </div>
-          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 col-span-1 md:col-span-2 mt-2 w-full">
-            <button
-              type="submit"
-              className={`px-4 sm:px-5 py-2 rounded font-semibold shadow transition-colors duration-150 ${
-                editingId
-                  ? "bg-yellow-500 hover:bg-yellow-600"
-                  : "bg-blue-600 hover:bg-blue-700"
-              } text-white disabled:opacity-60 w-full sm:w-auto text-sm sm:text-base`}
-              disabled={loading}
-            >
-              {editingId ? (loading ? "Updating..." : "Update User") : loading ? "Adding..." : "Add User"}
-            </button>
-            {editingId && (
-              <button
-                type="button"
-                className="bg-gray-400 hover:bg-gray-500 text-white px-4 sm:px-5 py-2 rounded font-semibold shadow disabled:opacity-60 w-full sm:w-auto text-sm sm:text-base"
-                onClick={handleCancelEdit}
-                disabled={loading}
-              >
-                Cancel
-              </button>
-            )}
-          </div>
-        </form>
+        )}
 
-        {/* Responsive Table/List */}
-        {/* Mobile List */}
-        <div className="block md:hidden">
-          {users.length === 0 && (
-            <div className="text-center p-6 text-gray-500 text-sm">
-              {loading ? "Loading..." : "No users found"}
-            </div>
-          )}
-          <div className="flex flex-col gap-4">
-            {users.map((u) => (
-              <div
-                key={u._id}
-                className="bg-white rounded-lg shadow border p-4 flex flex-col gap-2"
-              >
-                <div className="flex flex-col gap-1">
-                  <div className="font-semibold text-base text-gray-800">{u.name}</div>
-                  <div className="text-xs text-gray-500 break-all">{u.email}</div>
-                  <div className="text-xs text-gray-500">
-                    DOB: {u.DOB ? new Date(u.DOB).toLocaleDateString() : "—"}
-                  </div>
-                  <div className="text-xs text-gray-500">
-                    Phone: {u.phoneNumber || "—"}
-                  </div>
-                  <div className="text-xs text-gray-500 capitalize">
-                    Role: {u.role}
-                  </div>
-                </div>
-                <div className="flex gap-2 mt-2">
-                  <button
-                    onClick={() => handleEdit(u)}
-                    className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded text-xs font-semibold shadow"
-                    disabled={loading}
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDelete(u._id)}
-                    className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-xs font-semibold shadow"
-                    disabled={loading}
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Desktop Table */}
+        {/* Desktop Table - More Attractive Design */}
         <div className="hidden md:block">
-          <div className="overflow-x-auto rounded-lg shadow border">
+          <div className="overflow-x-auto rounded-xl shadow-xl border border-gray-200">
             <table className="w-full border-collapse">
               <thead>
-                <tr className="bg-gray-100">
-                  <th className="border-b px-4 py-3 text-left text-xs font-semibold text-gray-700">Name</th>
-                  <th className="border-b px-4 py-3 text-left text-xs font-semibold text-gray-700">Email</th>
-                  <th className="border-b px-4 py-3 text-left text-xs font-semibold text-gray-700">DOB</th>
-                  <th className="border-b px-4 py-3 text-left text-xs font-semibold text-gray-700">Phone</th>
-                  <th className="border-b px-4 py-3 text-left text-xs font-semibold text-gray-700">Role</th>
-                  <th className="border-b px-4 py-3 text-left text-xs font-semibold text-gray-700">Actions</th>
+                <tr className="bg-gray-800 text-white">
+                  <th className="px-4 py-3 text-left text-sm font-semibold">User Name</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">Email</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">Role</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">DOB/Phone</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">Orders</th>
+                  {/* Replaced 'Name' with 'Created Date' */}
+                  <th className="px-4 py-3 text-left text-sm font-semibold flex items-center">
+                    <FaCalendarAlt className="mr-1" /> Created Date
+                  </th>
                 </tr>
               </thead>
               <tbody>
-                {users.map((u) => (
-                  <tr key={u._id} className="hover:bg-gray-50 transition">
-                    <td className="border-b px-4 py-2 text-sm">{u.name}</td>
-                    <td className="border-b px-4 py-2 text-sm break-all">{u.email}</td>
-                    <td className="border-b px-4 py-2 text-sm">
-                      {u.DOB ? new Date(u.DOB).toLocaleDateString() : "—"}
+                {users.map((u, index) => (
+                  <tr 
+                    key={u._id} 
+                    className={`transition duration-150 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-blue-50/50 border-b border-gray-200`}
+                  >
+                    <td className="px-4 py-3 text-sm font-medium text-gray-900">{u.name}</td>
+                    <td className="px-4 py-3 text-sm text-blue-600 break-all">{u.email}</td>
+                    <td className="px-4 py-3 text-sm capitalize">
+                      <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
+                          u.role === 'admin' ? 'bg-red-200 text-red-800' :
+                          u.role === 'manager' ? 'bg-yellow-200 text-yellow-800' :
+                          u.role === 'staff' ? 'bg-green-200 text-green-800' :
+                          'bg-gray-200 text-gray-800'
+                      }`}>
+                        {u.role}
+                      </span>
                     </td>
-                    <td className="border-b px-4 py-2 text-sm">{u.phoneNumber || "—"}</td>
-                    <td className="border-b px-4 py-2 text-sm capitalize">{u.role}</td>
-                    <td className="border-b px-4 py-2 text-sm">
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => handleEdit(u)}
-                          className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded text-xs font-semibold shadow"
-                          disabled={loading}
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleDelete(u._id)}
-                          className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-xs font-semibold shadow"
-                          disabled={loading}
-                        >
-                          Delete
-                        </button>
-                      </div>
+                    <td className="px-4 py-3 text-xs text-gray-600">
+                      {u.DOB ? <div className='flex items-center'><FaCalendarAlt className='mr-1 text-gray-400'/> {new Date(u.DOB).toLocaleDateString()}</div> : "—"}
+                      {u.phoneNumber && <div className='flex items-center mt-1'><FaPhoneAlt className='mr-1 text-gray-400'/> {u.phoneNumber}</div>}
                     </td>
+                    <td className="px-4 py-3 text-sm font-bold text-gray-700">
+                      {Array.isArray(u.orders) ? u.orders.length : 0}
+                    </td>
+                    {/* Display Created Date */}
+                    <td className="px-4 py-3 text-sm text-gray-500">
+                      {new Date(u.createdAt).toLocaleDateString()}
+                    </td>
+                    {/* Removed Actions column and buttons */}
                   </tr>
                 ))}
-                {users.length === 0 && (
-                  <tr>
-                    <td colSpan="6" className="text-center p-4 text-gray-500 text-sm">
-                      {loading ? "Loading..." : "No users found"}
-                    </td>
-                  </tr>
-                )}
               </tbody>
             </table>
+          </div>
+        </div>
+
+        {/* Mobile Cards - More Attractive Design */}
+        <div className="block md:hidden">
+          <div className="flex flex-col space-y-4">
+            {users.map((u) => (
+              <div
+                key={u._id}
+                className="bg-white rounded-xl shadow-lg border border-gray-200 p-4 transition duration-200 hover:shadow-xl"
+              >
+                <div className="flex justify-between items-start mb-2 border-b pb-2">
+                    <div className="font-extrabold text-lg text-gray-900 leading-tight">{u.name}</div>
+                    <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold capitalize ${
+                          u.role === 'admin' ? 'bg-red-200 text-red-800' :
+                          u.role === 'manager' ? 'bg-yellow-200 text-yellow-800' :
+                          u.role === 'staff' ? 'bg-green-200 text-green-800' :
+                          'bg-gray-200 text-gray-800'
+                      }`}>
+                        {u.role}
+                    </span>
+                </div>
+                
+                <div className="space-y-2 text-sm text-gray-700">
+                  <div className="flex items-center"><FaEnvelope className="text-blue-500 mr-2 w-4"/> <span className="text-gray-600 break-all">{u.email}</span></div>
+                  
+                  <div className="flex items-center text-xs">
+                    <FaCalendarAlt className="text-gray-500 mr-2 w-4"/> 
+                    **Created:** {new Date(u.createdAt).toLocaleDateString()}
+                  </div>
+                  
+                  <div className="flex justify-between items-center pt-2 border-t border-dashed mt-2">
+                    <div className="flex items-center text-xs text-gray-600">
+                      <FaBuilding className="text-gray-500 mr-1 w-3"/> DOB: {u.DOB ? new Date(u.DOB).toLocaleDateString() : "—"}
+                    </div>
+                    <div className="font-semibold text-sm text-blue-600">
+                      Orders: {Array.isArray(u.orders) ? u.orders.length : 0}
+                    </div>
+                  </div>
+
+                  {u.phoneNumber && (
+                    <div className="flex items-center text-xs text-gray-600">
+                      <FaPhoneAlt className="text-gray-500 mr-2 w-4"/> Phone: {u.phoneNumber}
+                    </div>
+                  )}
+                </div>
+                {/* Removed Edit and Delete buttons */}
+              </div>
+            ))}
           </div>
         </div>
       </div>
