@@ -50,6 +50,7 @@ import Orders from "./Component/pages/dashboard/Orders";
 import Coupons from "./Component/pages/dashboard/Coupans";
 import Blog from "./Component/pages/dashboard/Blog";
 import ContactDetails from "./Component/pages/dashboard/ContactDetails";
+import Subscribe from "./Component/pages/dashboard/Subscribe";
 
 // Order page
 import MyOrders from "./pages/MyOrders";
@@ -66,89 +67,6 @@ function ProtectedRoute({ element, role }) {
   return element;
 }
 
-// 🪔 Festive Popup Component
-function DiwaliPopup() {
-  const [show, setShow] = useState(false);
-
-  useEffect(() => {
-    const alreadyShown = sessionStorage.getItem("diwaliPopupShown");
-    if (!alreadyShown) {
-      setShow(true);
-      sessionStorage.setItem("diwaliPopupShown", "true");
-      setTimeout(() => setShow(false), 8000); // auto close after 8 seconds
-    }
-  }, []);
-
-  if (!show) return null;
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm animate-fadeIn">
-      <div className="relative bg-gradient-to-br from-yellow-100 via-orange-100 to-pink-100 rounded-3xl shadow-2xl p-8 max-w-md w-[90%] text-center border-4 border-yellow-400 animate-pop">
-        <button
-          onClick={() => setShow(false)}
-          className="absolute top-2 right-4 text-gray-700 hover:text-black text-2xl"
-        >
-          ×
-        </button>
-
-        <img
-          src="https://cdn-icons-png.flaticon.com/512/3037/3037068.png"
-          alt="Diya Lamp"
-          className="w-20 h-20 mx-auto mb-4 animate-bounce"
-        />
-
-        <h2 className="text-2xl md:text-3xl font-bold text-orange-700 mb-2">
-          🪔 Happy Diwali! 🪔
-        </h2>
-        <p className="text-gray-700 mb-4">
-          Wishing you joy, prosperity, and brightness this festive season.
-        </p>
-
-        <div className="bg-yellow-400 text-white font-semibold py-2 px-6 rounded-full shadow-lg hover:bg-yellow-500 transition-all duration-200">
-          Enjoy Festive Offers 🎉
-        </div>
-
-        {/* Floating sparkles */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          {[...Array(15)].map((_, i) => (
-            <div
-              key={i}
-              className="absolute bg-yellow-300 rounded-full opacity-75 animate-float"
-              style={{
-                width: `${Math.random() * 6 + 4}px`,
-                height: `${Math.random() * 6 + 4}px`,
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-                animationDuration: `${Math.random() * 4 + 3}s`,
-              }}
-            ></div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ✨ Animations
-const style = document.createElement("style");
-style.innerHTML = `
-@keyframes pop {
-  0% { transform: scale(0.8); opacity: 0; }
-  100% { transform: scale(1); opacity: 1; }
-}
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-@keyframes float {
-  0% { transform: translateY(0px); opacity: 1; }
-  100% { transform: translateY(-80px); opacity: 0; }
-}
-.animate-pop { animation: pop 0.5s ease-out; }
-.animate-fadeIn { animation: fadeIn 0.4s ease-out; }
-.animate-float { animation: float linear infinite; }
-`;
-document.head.appendChild(style);
 
 function App() {
   return (
@@ -191,6 +109,7 @@ function App() {
               <Route path="/dashboard/orders" element={<ProtectedRoute role="admin" element={<DashboardLayout><Orders /></DashboardLayout>} />} />
               <Route path="/dashboard/blog" element={<ProtectedRoute role="admin" element={<DashboardLayout><Blog /></DashboardLayout>} />} /> 
               <Route path="/dashboard/contact-details" element={<ProtectedRoute role="admin" element={<DashboardLayout><ContactDetails /></DashboardLayout>} />} />
+              <Route path="/dashboard/send-mail" element={<ProtectedRoute  role="admin" element={<DashboardLayout><Subscribe/></DashboardLayout>} />} />
 
               {/* Home */}
               <Route path="/" element={<Home />} />
