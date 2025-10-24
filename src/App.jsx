@@ -73,7 +73,7 @@ function App() {
     <CartProvider>
       <BrowserRouter>
         <ScrollToTop />
-        <DiwaliPopup /> {/* 🪔 Added Here */}
+        {/* <DiwaliPopup /> 🪔 Added Here */}
         <div className="min-h-screen flex flex-col">
           <Header />
           <main className="flex-grow">
