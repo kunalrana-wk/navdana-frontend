@@ -87,7 +87,7 @@ function App() {
               <Route path="/contact" element={<Contact />} />
               <Route path="/returns-exchanges" element={<ReturnsExchanges />} />
               <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-              {/* <Route path="/blog" element={<Blog />} /> */}
+              <Route path="/blog" element={<Blog />} />
               <Route path="/cancel-policy" element={<CancelPolicy />} />
               <Route path="/return-exchange-request" element={<ReturnExchangeRequest />} />
               <Route path="/career" element={<Career />} />
@@ -107,9 +107,10 @@ function App() {
               <Route path="/dashboard/banners" element={<ProtectedRoute role="admin" element={<DashboardLayout><Banners /></DashboardLayout>} />} />
               <Route path="/dashboard/users" element={<ProtectedRoute role="admin" element={<DashboardLayout><Users /></DashboardLayout>} />} />
               <Route path="/dashboard/orders" element={<ProtectedRoute role="admin" element={<DashboardLayout><Orders /></DashboardLayout>} />} />
-              {/* <Route path="/dashboard/blog" element={<ProtectedRoute role="admin" element={<DashboardLayout><Blog /></DashboardLayout>} />} />  */}
+              <Route path="/dashboard/blog" element={<ProtectedRoute role="admin" element={<DashboardLayout><Blog /></DashboardLayout>} />} /> 
               <Route path="/dashboard/contact-details" element={<ProtectedRoute role="admin" element={<DashboardLayout><ContactDetails /></DashboardLayout>} />} />
               <Route path="/dashboard/send-mail" element={<ProtectedRoute  role="admin" element={<DashboardLayout><Subscribe/></DashboardLayout>} />} />
+              <Route path="/dashboard/coupons" element={<ProtectedRoute role="admin" element={<DashboardLayout> <Coupons/> </DashboardLayout>} />} />
 
               {/* Home */}
               <Route path="/" element={<Home />} />

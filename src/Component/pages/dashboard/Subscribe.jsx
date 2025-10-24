@@ -9,9 +9,9 @@ const Subscribe = () => {
 
   const fetchSubscribers = async () => {
     try {
-      const res = await axios.get("https://navdana.com/api/v1/subscribe",{
+      const res = await axios.get("https://navdana.com/api/v1/subscribe", {
         headers: {
-            Authorization: `Bearer ${token}`
+          Authorization: `Bearer ${token}`
         }
       });
       let subs = res?.data?.data || res?.data?.subscribers;
@@ -25,26 +25,26 @@ const Subscribe = () => {
     fetchSubscribers();
   }, []);
 
-  const handleSubmit = async(e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     console.log(message)
 
-   try {
-     let config = {
+    try {
+      let config = {
         headers: {
-            Authorization: token ? `Bearer ${token}` : ""
+          Authorization: token ? `Bearer ${token}` : ""
         }
-    }
+      }
 
-    let dataToSend = {message}
+      let dataToSend = { message }
 
-    await axios.post('https://navdana.com/api/v1/subscribe/send-mail',
+      await axios.post('https://navdana.com/api/v1/subscribe/send-mail',
         dataToSend,
         config
-    )
-   } catch (error) {
-    
-   }
+      )
+    } catch (error) {
+
+    }
 
   }
 
