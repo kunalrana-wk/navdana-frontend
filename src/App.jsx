@@ -107,7 +107,7 @@ function App() {
               <Route path="/dashboard/banners" element={<ProtectedRoute role="admin" element={<DashboardLayout><Banners /></DashboardLayout>} />} />
               <Route path="/dashboard/users" element={<ProtectedRoute role="admin" element={<DashboardLayout><Users /></DashboardLayout>} />} />
               <Route path="/dashboard/orders" element={<ProtectedRoute role="admin" element={<DashboardLayout><Orders /></DashboardLayout>} />} />
-              <Route path="/dashboard/blog" element={<ProtectedRoute role="admin" element={<DashboardLayout><Blog /></DashboardLayout>} />} /> 
+              {/* <Route path="/dashboard/blog" element={<ProtectedRoute role="admin" element={<DashboardLayout><Blog /></DashboardLayout>} />} />  */}
               <Route path="/dashboard/contact-details" element={<ProtectedRoute role="admin" element={<DashboardLayout><ContactDetails /></DashboardLayout>} />} />
               <Route path="/dashboard/send-mail" element={<ProtectedRoute  role="admin" element={<DashboardLayout><Subscribe/></DashboardLayout>} />} />
 
