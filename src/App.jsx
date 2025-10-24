@@ -87,7 +87,7 @@ function App() {
               <Route path="/contact" element={<Contact />} />
               <Route path="/returns-exchanges" element={<ReturnsExchanges />} />
               <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-              <Route path="/blog" element={<Blog />} />
+              {/* <Route path="/blog" element={<Blog />} /> */}
               <Route path="/cancel-policy" element={<CancelPolicy />} />
               <Route path="/return-exchange-request" element={<ReturnExchangeRequest />} />
               <Route path="/career" element={<Career />} />
