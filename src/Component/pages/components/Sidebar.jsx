@@ -62,6 +62,11 @@ const menuItems = [
     to: "/dashboard/contact-details",
     label: "Contact Details",
     icon: <span role="img" aria-label="Contact Details">📞</span>,
+  },
+  {
+    to: "/dashboard/send-mail",
+    label: "Send Mail",
+    icon: <span>Sub</span>
   }
 ];
 

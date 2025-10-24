@@ -55,8 +55,11 @@ const Footer = () => {
         e.preventDefault();
         setStatus('loading');
         setErrorMsg('');
-        // Simulate API call
-        await new Promise((resolve) => setTimeout(resolve, 1200));
+       
+        // api call
+        const res = await axios.post('https://navdana.com/api/v1/subscribe',{email})
+        console.log(res?.data)
+        
         // Simple email validation
         if (!/^[\w-.]+@([\w-]+\.)+[\w-]{2,}$/.test(email)) {
             setStatus('error');
