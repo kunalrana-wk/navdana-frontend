@@ -228,7 +228,7 @@ const Header = () => {
       {/* Top promotional strip */}
       <div className="text-center bg-gray-950 text-white py-3">
         <p className="text-sm sm:text-base font-semibold tracking-wide">
-          ⚡ PAN India Delivery ⚡
+          ⚡ Making time is 5-7 Business days ⚡
         </p>
       </div>
 
