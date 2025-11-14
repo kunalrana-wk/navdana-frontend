@@ -14,6 +14,7 @@ export default function Detailsprod() {
         if (res.data.success) {
           setProduct(res.data.data);
         }
+        
       } catch (error) {
         console.error("Error fetching product:", error);
       }

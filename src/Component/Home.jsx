@@ -6,12 +6,14 @@ import ExploreAndBuy from "./ExploreAndBuy";
 import Footer1 from "./Footer/Footer1";
 import About from "./Information/About";
 import BlogPage from "./Information/BlogPage";
+import VelvetEdit from "./VelvetEdit";
 
 const Home = () => {
   return (
     <div className="bg-gray-50">
       <OfferZone />
       <Collection />
+      <VelvetEdit />
       <SuitSet />
       <ExploreAndBuy />
       <Footer1 />
